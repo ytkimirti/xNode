@@ -444,6 +444,8 @@ namespace XNodeEditor {
                 //Get node position
                 Vector2 nodePos = GridToWindowPositionNoClipped(node.position);
 
+                node.folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-8,10), new Vector2(30,30)), !node.folded, GUIContent.none);
+
                 GUILayout.BeginArea(new Rect(nodePos, new Vector2(nodeEditor.GetWidth(), 4000)));
 
                 bool selected = selectionCache.Contains(graph.nodes[n]);

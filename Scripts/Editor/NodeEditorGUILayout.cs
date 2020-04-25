@@ -37,9 +37,14 @@ namespace XNodeEditor {
             if (property == null) throw new NullReferenceException();
 
             // If property is not a port, display a regular property field
-            if (port == null) EditorGUILayout.PropertyField(property, label, includeChildren, GUILayout.MinWidth(30));
+            if (port == null)
+            {
+                if (!(property.serializedObject.targetObject as XNode.Node).folded)
+                    EditorGUILayout.PropertyField(property, label, includeChildren, GUILayout.MinWidth(30));
+            }
             else {
                 Rect rect = new Rect();
+                bool hiddenByFold = port.node.folded && !port.IsConnected;
 
                 List<PropertyAttribute> propertyAttributes = NodeEditorUtilities.GetCachedPropertyAttribs(port.node.GetType(), property.name);
 
@@ -54,6 +59,23 @@ namespace XNodeEditor {
                         showBacking = inputAttribute.backingValue;
                     }
 
+                    switch ( showBacking )
+                    {
+                        case XNode.Node.ShowBackingValue.Always:
+                            hiddenByFold = false;
+                            break;
+                        case XNode.Node.ShowBackingValue.Never:
+                        case XNode.Node.ShowBackingValue.Unconnected:
+                            break;
+                    }
+
+                    if ( dynamicPortList )
+                        hiddenByFold = false;
+
+                    if ( hiddenByFold )
+                        return;
+
+                    //Call GUILayout.Space if Space attribute is set and we are NOT drawing a PropertyField
                     bool usePropertyAttributes = dynamicPortList ||
                         showBacking == XNode.Node.ShowBackingValue.Never ||
                         (showBacking == XNode.Node.ShowBackingValue.Unconnected && port.IsConnected);
@@ -110,6 +132,23 @@ namespace XNodeEditor {
                         showBacking = outputAttribute.backingValue;
                     }
 
+                    switch ( showBacking )
+                    {
+                        case XNode.Node.ShowBackingValue.Always:
+                            hiddenByFold = false;
+                            break;
+                        case XNode.Node.ShowBackingValue.Never:
+                        case XNode.Node.ShowBackingValue.Unconnected:
+                            break;
+                    }
+
+                    if ( dynamicPortList )
+                        hiddenByFold = false;
+
+                    if ( hiddenByFold )
+                        return;
+
+                    //Call GUILayout.Space if Space attribute is set and we are NOT drawing a PropertyField
                     bool usePropertyAttributes = dynamicPortList ||
                         showBacking == XNode.Node.ShowBackingValue.Never ||
                         (showBacking == XNode.Node.ShowBackingValue.Unconnected && port.IsConnected);

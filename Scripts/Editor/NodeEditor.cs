@@ -38,7 +38,7 @@ namespace XNodeEditor {
             // serializedObject.Update(); must go at the start of an inspector gui, and
             // serializedObject.ApplyModifiedProperties(); goes at the end.
             serializedObject.Update();
-            string[] excludes = { "m_Script", "graph", "position", "ports" };
+            string[] excludes = { "m_Script", "graph", "position", "folded", "ports" };
 
 #if ODIN_INSPECTOR
             InspectorUtilities.BeginDrawPropertyTree(objectTree, true);
