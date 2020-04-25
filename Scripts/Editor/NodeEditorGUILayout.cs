@@ -39,12 +39,22 @@ namespace XNodeEditor {
             // If property is not a port, display a regular property field
             if (port == null)
             {
-                if (!(property.serializedObject.targetObject as XNode.Node).folded)
+                XNode.Node node = property.serializedObject.targetObject as XNode.Node;
+                bool hiddenByFold = node.folded;
+                DontFoldAttribute dontFoldAttribute;
+                if (NodeEditorUtilities.GetCachedAttrib(node.GetType(), property.name, out dontFoldAttribute)) {
+                    hiddenByFold = false;
+                }
+                if (!hiddenByFold)
                     EditorGUILayout.PropertyField(property, label, includeChildren, GUILayout.MinWidth(30));
             }
             else {
                 Rect rect = new Rect();
                 bool hiddenByFold = port.node.folded && !port.IsConnected;
+                DontFoldAttribute dontFoldAttribute;
+                if (NodeEditorUtilities.GetCachedAttrib(port.node.GetType(), property.name, out dontFoldAttribute)) {
+                    hiddenByFold = false;
+                }
 
                 List<PropertyAttribute> propertyAttributes = NodeEditorUtilities.GetCachedPropertyAttribs(port.node.GetType(), property.name);
 
@@ -350,7 +360,7 @@ namespace XNodeEditor {
             // if trying to hiden then check all connections
             if ( hiddenByFold && dynamicPorts.All( x => !x.IsConnected ) )
                 return;
-            
+
             ReorderableList list = null;
             Dictionary<string, ReorderableList> rlc;
             if (reorderableListCache.TryGetValue(serializedObject.targetObject, out rlc)) {
@@ -365,7 +375,7 @@ namespace XNodeEditor {
             }
             list.list = dynamicPorts;
             list.DoLayoutList();
-            
+
         }
 
         private static ReorderableList CreateReorderableList(string fieldName, List<XNode.NodePort> dynamicPorts, SerializedProperty arrayData, Type type, SerializedObject serializedObject, XNode.NodePort.IO io, XNode.Node.ConnectionType connectionType, XNode.Node.TypeConstraint typeConstraint, Action<ReorderableList> onCreation) {
