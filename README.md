@@ -1,3 +1,7 @@
+***NOTE***<br>
+Full Odin Inspector support requires an additional extension<br>
+[KAJed82/xNode-OdinExtensions](https://github.com/KAJed82/xNode-OdinExtensions)
+
 <img align="right" width="100" height="100" src="https://user-images.githubusercontent.com/37786733/41541140-71602302-731a-11e8-9434-79b3a57292b6.png">
 
 [![Discord](https://img.shields.io/discord/361769369404964864.svg)](https://discord.gg/qgPrHv4)
