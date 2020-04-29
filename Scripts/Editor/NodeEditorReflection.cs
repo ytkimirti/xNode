@@ -18,10 +18,10 @@ namespace XNodeEditor {
 
         /// <summary> Return a delegate used to determine whether window is docked or not. It is faster to cache this delegate than run the reflection required each time. </summary>
         public static Func<bool> GetIsDockedDelegate(this EditorWindow window) {
-            BindingFlags fullBinding = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+                    BindingFlags fullBinding = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
             MethodInfo isDockedMethod = typeof(EditorWindow).GetProperty("docked", fullBinding).GetGetMethod(true);
             return (Func<bool>) Delegate.CreateDelegate(typeof(Func<bool>), window, isDockedMethod);
-        }
+                }
 
         public static Type[] GetNodeTypes() {
             //Get all classes deriving from Node via reflection
@@ -69,7 +69,7 @@ namespace XNodeEditor {
             System.Reflection.Assembly[] assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
             foreach (Assembly assembly in assemblies) {
                 try {
-                    types.AddRange(assembly.GetTypes().Where(t => !t.IsAbstract && baseType.IsAssignableFrom(t)).ToArray());
+                types.AddRange(assembly.GetTypes().Where(t => !t.IsAbstract && baseType.IsAssignableFrom(t)).ToArray());
                 } catch (ReflectionTypeLoadException) { }
             }
             return types.ToArray();
@@ -91,10 +91,10 @@ namespace XNodeEditor {
                     if (invalidatedEntries.Contains(kvp.Key.menuItem)) {
                         contextMenu.AddDisabledItem(new GUIContent(kvp.Key.menuItem));
                     } else {
-                        contextMenu.AddItem(new GUIContent(kvp.Key.menuItem), false, () => kvp.Value.Invoke(obj, null));
-                    }
+                    contextMenu.AddItem(new GUIContent(kvp.Key.menuItem), false, () => kvp.Value.Invoke(obj, null));
                 }
             }
+        }
         }
 
         /// <summary> Call OnValidate on target </summary>

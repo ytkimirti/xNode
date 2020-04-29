@@ -26,10 +26,10 @@ namespace XNodeEditor.Internal {
 			get {
 				if (this._objectTree == null) {
 					try {
-						bool wasInEditor = NodeEditor.inNodeEditor;
-						NodeEditor.inNodeEditor = true;
+						bool wasInEditor = NodeEditor.InNodeEditor;
+						NodeEditor.InNodeEditor = true;
 						this._objectTree = PropertyTree.Create(this.serializedObject);
-						NodeEditor.inNodeEditor = wasInEditor;
+						NodeEditor.InNodeEditor = wasInEditor;
 					} catch (ArgumentException ex) {
 						Debug.Log(ex);
 					}

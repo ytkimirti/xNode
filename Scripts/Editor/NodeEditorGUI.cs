@@ -1,4 +1,10 @@
-﻿using System;
+﻿
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector.Editor;
+using Sirenix.Utilities.Editor;
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -11,6 +17,7 @@ namespace XNodeEditor {
         public NodeGraphEditor graphEditor;
         private List<UnityEngine.Object> selectionCache;
         private List<XNode.Node> culledNodes;
+        private List<int> orderedNodeIndices = new List<int>();
         /// <summary> 19 if docked, 22 if not </summary>
         private int topPadding { get { return isDocked() ? 19 : 22; } }
         /// <summary> Executed after all other window GUI. Useful if Zoom is ruining your day. Automatically resets after being run.</summary>
@@ -21,6 +28,16 @@ namespace XNodeEditor {
             Event e = Event.current;
             Matrix4x4 m = GUI.matrix;
             if (graph == null) return;
+
+            // Ensure we have all node indices covered
+            while ( orderedNodeIndices.Count < graph.nodes.Count )
+                orderedNodeIndices.Add( orderedNodeIndices.Count );
+            while ( orderedNodeIndices.Count > graph.nodes.Count )
+            {
+                int removeIndex = orderedNodeIndices.IndexOf( orderedNodeIndices.Count - 1 );
+                orderedNodeIndices.RemoveAt( removeIndex );
+            }
+
             ValidateGraphEditor();
             Controls();
 
@@ -37,6 +54,10 @@ namespace XNodeEditor {
                 onLateGUI();
                 onLateGUI = null;
             }
+
+#if ODIN_INSPECTOR
+            GUIHelper.RepaintIfRequested(this);
+#endif
 
             GUI.matrix = m;
         }
@@ -184,7 +205,7 @@ namespace XNodeEditor {
                                 if (draw >= 2) draw = -2;
                                 if (draw < 0) continue;
                                 if (draw == 0) bezierPrevious = CalculateBezierPoint(point_a, tangent_a, tangent_b, point_b, (j - 1f) / (float) division);
-                            }
+                        }
                             if (i == length - 2)
                                 Handles.color = gradient.Evaluate((j + 1f) / division);
                             Vector2 bezierNext = CalculateBezierPoint(point_a, tangent_a, tangent_b, point_b, j / (float) division);
@@ -212,7 +233,7 @@ namespace XNodeEditor {
                             if (draw > 0) {
                                 if (i == length - 2) Handles.color = gradient.Evaluate(t);
                                 DrawAAPolyLineNonAlloc(thickness, prev_point, lerp);
-                            }
+                    }
                             prev_point = lerp;
                             if (stroke == NoodleStroke.Dashed && draw >= 2) draw = -2;
                         }
@@ -225,7 +246,7 @@ namespace XNodeEditor {
                             float midpoint = (gridPoints[i].x + gridPoints[i + 1].x) * 0.5f;
                             Vector2 start_1 = gridPoints[i];
                             Vector2 end_1 = gridPoints[i + 1];
-                            start_1.x = midpoint;
+                        start_1.x = midpoint;
                             end_1.x = midpoint;
                             if (i == length - 2) {
                                 DrawAAPolyLineNonAlloc(thickness, gridPoints[i], start_1);
@@ -242,12 +263,12 @@ namespace XNodeEditor {
                             float midpoint = (gridPoints[i].y + gridPoints[i + 1].y) * 0.5f;
                             Vector2 start_1 = gridPoints[i];
                             Vector2 end_1 = gridPoints[i + 1];
-                            start_1.x += 25 / zoom;
-                            end_1.x -= 25 / zoom;
-                            Vector2 start_2 = start_1;
-                            Vector2 end_2 = end_1;
-                            start_2.y = midpoint;
-                            end_2.y = midpoint;
+                        start_1.x += 25 / zoom;
+                        end_1.x -= 25 / zoom;
+                        Vector2 start_2 = start_1;
+                        Vector2 end_2 = end_1;
+                        start_2.y = midpoint;
+                        end_2.y = midpoint;
                             if (i == length - 2) {
                                 DrawAAPolyLineNonAlloc(thickness, gridPoints[i], start_1);
                                 Handles.color = gradient.Evaluate(0.25f);
@@ -265,7 +286,7 @@ namespace XNodeEditor {
                                 DrawAAPolyLineNonAlloc(thickness, end_2, end_1);
                                 DrawAAPolyLineNonAlloc(thickness, end_1, gridPoints[i + 1]);
                             }
-                        }
+                    }
                     }
                     break;
                 case NoodlePath.ShaderLab:
@@ -296,10 +317,10 @@ namespace XNodeEditor {
                             if (draw > 0) {
                                 if (i == length - 2) Handles.color = gradient.Evaluate(t);
                                 DrawAAPolyLineNonAlloc(thickness, prev_point, lerp);
-                            }
+            }
                             prev_point = lerp;
                             if (stroke == NoodleStroke.Dashed && draw >= 2) draw = -2;
-                        }
+        }
                     }
                     gridPoints[0] = start;
                     gridPoints[length - 1] = end;
@@ -320,6 +341,8 @@ namespace XNodeEditor {
                 //If a null node is found, return. This can happen if the nodes associated script is deleted. It is currently not possible in Unity to delete a null asset.
                 if (node == null) continue;
 
+                bool selected = selectionCache != null && selectionCache.Contains(node) || NodeEditorWindow.IsHighlighted(node);
+
                 // Draw full connections and output > reroute
                 foreach (XNode.NodePort output in node.Outputs) {
                     //Needs cleanup. Null checks are ugly
@@ -330,8 +353,8 @@ namespace XNodeEditor {
                     for (int k = 0; k < output.ConnectionCount; k++) {
                         XNode.NodePort input = output.GetConnection(k);
 
-                        Gradient noodleGradient = graphEditor.GetNoodleGradient(output, input);
-                        float noodleThickness = graphEditor.GetNoodleThickness(output, input);
+                        Gradient noodleGradient = graphEditor.GetNoodleGradient(selected, output, input);
+                        float noodleThickness = graphEditor.GetNoodleThickness(selected, output, input);
                         NoodlePath noodlePath = graphEditor.GetNoodlePath(output, input);
                         NoodleStroke noodleStroke = graphEditor.GetNoodleStroke(output, input);
 
@@ -412,7 +435,8 @@ namespace XNodeEditor {
             List<XNode.NodePort> removeEntries = new List<XNode.NodePort>();
 
             if (e.type == EventType.Layout) culledNodes = new List<XNode.Node>();
-            for (int n = 0; n < graph.nodes.Count; n++) {
+            //for (int n = 0; n < graph.nodes.Count; n++) {
+            foreach (int n in orderedNodeIndices) {
                 // Skip null nodes. The user could be in the process of renaming scripts, so removing them at this point is not advisable.
                 if (graph.nodes[n] == null) continue;
                 if (n >= graph.nodes.Count) return;
@@ -444,9 +468,18 @@ namespace XNodeEditor {
                 //Get node position
                 Vector2 nodePos = GridToWindowPositionNoClipped(node.position);
 
+                EditorGUI.BeginChangeCheck();
+                node.folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
+                if ( EditorGUI.EndChangeCheck() )
+                {
+#if ODIN_INSPECTOR
+                    GUIHelper.RequestRepaint();
+#endif
+                }
+
                 GUILayout.BeginArea(new Rect(nodePos, new Vector2(nodeEditor.GetWidth(), 4000)));
 
-                bool selected = selectionCache.Contains(graph.nodes[n]);
+                bool selected = selectionCache != null && selectionCache.Contains(graph.nodes[n]) || NodeEditorWindow.IsHighlighted(graph.nodes[n]);
 
                 if (selected) {
                     GUIStyle style = new GUIStyle(nodeEditor.GetBodyStyle());
@@ -529,8 +562,8 @@ namespace XNodeEditor {
             if (e.type != EventType.Layout && currentActivity == NodeActivity.DragGrid) Selection.objects = preSelection.ToArray();
             EndZoomed(position, zoom, topPadding);
 
-            //If a change in is detected in the selected node, call OnValidate method. 
-            //This is done through reflection because OnValidate is only relevant in editor, 
+            //If a change in is detected in the selected node, call OnValidate method.
+            //This is done through reflection because OnValidate is only relevant in editor,
             //and thus, the code should not be included in build.
             if (onValidate != null && EditorGUI.EndChangeCheck()) onValidate.Invoke(Selection.activeObject, null);
         }

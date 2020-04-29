@@ -93,12 +93,12 @@ namespace XNodeEditor {
         /// <summary> Returned gradient is used to color noodles </summary>
         /// <param name="output"> The output this noodle comes from. Never null. </param>
         /// <param name="input"> The output this noodle comes from. Can be null if we are dragging the noodle. </param>
-        public virtual Gradient GetNoodleGradient(XNode.NodePort output, XNode.NodePort input) {
+        public virtual Gradient GetNoodleGradient(bool selected, XNode.NodePort output, XNode.NodePort input) {
             Gradient grad = new Gradient();
 
             // If dragging the noodle, draw solid, slightly transparent
             if (input == null) {
-                Color a = GetTypeColor(output.ValueType);
+                Color a = selected ? GetSelectedTypeColor(output.ValueType) : GetTypeColor(output.ValueType);
                 grad.SetKeys(
                     new GradientColorKey[] { new GradientColorKey(a, 0f) },
                     new GradientAlphaKey[] { new GradientAlphaKey(0.6f, 0f) }
@@ -106,8 +106,8 @@ namespace XNodeEditor {
             }
             // If normal, draw gradient fading from one input color to the other
             else {
-                Color a = GetTypeColor(output.ValueType);
-                Color b = GetTypeColor(input.ValueType);
+                Color a = selected ? GetSelectedTypeColor( output.ValueType ) : GetTypeColor( output.ValueType);
+                Color b = selected ? GetSelectedTypeColor( input.ValueType ) : GetTypeColor(input.ValueType);
                 // If any port is hovered, tint white
                 if (window.hoveredPort == output || window.hoveredPort == input) {
                     a = Color.Lerp(a, Color.white, 0.8f);
@@ -124,8 +124,8 @@ namespace XNodeEditor {
         /// <summary> Returned float is used for noodle thickness </summary>
         /// <param name="output"> The output this noodle comes from. Never null. </param>
         /// <param name="input"> The output this noodle comes from. Can be null if we are dragging the noodle. </param>
-        public virtual float GetNoodleThickness(XNode.NodePort output, XNode.NodePort input) {
-            return 5f;
+        public virtual float GetNoodleThickness(bool selected, XNode.NodePort output, XNode.NodePort input) {
+            return selected ? 7f : 5f;
         }
 
         public virtual NoodlePath GetNoodlePath(XNode.NodePort output, XNode.NodePort input) {
@@ -144,6 +144,10 @@ namespace XNodeEditor {
         /// <summary> Returns generated color for a type. This color is editable in preferences </summary>
         public virtual Color GetTypeColor(Type type) {
             return NodeEditorPreferences.GetTypeColor(type);
+        }
+
+        public virtual Color GetSelectedTypeColor(Type type) {
+            return NodeEditorPreferences.GetSelectedTypeColor(type);
         }
 
         /// <summary> Override to display custom tooltips </summary>
@@ -218,7 +222,7 @@ namespace XNodeEditor {
 
         [AttributeUsage(AttributeTargets.Class)]
         public class CustomNodeGraphEditorAttribute : Attribute,
-        XNodeEditor.Internal.NodeEditorBase<NodeGraphEditor, NodeGraphEditor.CustomNodeGraphEditorAttribute, XNode.NodeGraph>.INodeEditorAttrib {
+            XNodeEditor.Internal.NodeEditorBase<NodeGraphEditor, NodeGraphEditor.CustomNodeGraphEditorAttribute, XNode.NodeGraph>.INodeEditorAttrib {
             private Type inspectedType;
             public string editorPrefsKey;
             /// <summary> Tells a NodeGraphEditor which Graph type it is an editor for </summary>
