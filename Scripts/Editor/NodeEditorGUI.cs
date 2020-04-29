@@ -24,24 +24,31 @@ namespace XNodeEditor {
         public event Action onLateGUI;
         private static readonly Vector3[] polyLineTempArray = new Vector3[2];
 
+		protected void UpdateOrderedNodeIndices()
+		{
+			// Ensure we have all node indices covered
+			while ( orderedNodeIndices.Count < graph.nodes.Count )
+				orderedNodeIndices.Add( orderedNodeIndices.Count );
+			while ( orderedNodeIndices.Count > graph.nodes.Count )
+			{
+				int removeIndex = orderedNodeIndices.IndexOf( orderedNodeIndices.Count - 1 );
+				orderedNodeIndices.RemoveAt( removeIndex );
+			}
+		}
+
         protected virtual void OnGUI() {
             Event e = Event.current;
             Matrix4x4 m = GUI.matrix;
             if (graph == null) return;
 
-            // Ensure we have all node indices covered
-            while ( orderedNodeIndices.Count < graph.nodes.Count )
-                orderedNodeIndices.Add( orderedNodeIndices.Count );
-            while ( orderedNodeIndices.Count > graph.nodes.Count )
-            {
-                int removeIndex = orderedNodeIndices.IndexOf( orderedNodeIndices.Count - 1 );
-                orderedNodeIndices.RemoveAt( removeIndex );
-            }
+			UpdateOrderedNodeIndices();
 
-            ValidateGraphEditor();
+			ValidateGraphEditor();
             Controls();
 
-            DrawGrid(position, zoom, panOffset);
+			UpdateOrderedNodeIndices();
+
+			DrawGrid(position, zoom, panOffset);
             DrawConnections();
             DrawDraggedConnection();
             DrawNodes();
@@ -469,11 +476,13 @@ namespace XNodeEditor {
                 Vector2 nodePos = GridToWindowPositionNoClipped(node.position);
 
                 EditorGUI.BeginChangeCheck();
-                node.folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
+				var folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
                 if ( EditorGUI.EndChangeCheck() )
                 {
+					Undo.RecordObject( node, $"Fold Node: {node.name}" );
+					node.folded = folded;
 #if ODIN_INSPECTOR
-                    GUIHelper.RequestRepaint();
+					GUIHelper.RequestRepaint();
 #endif
                 }
 
