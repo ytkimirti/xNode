@@ -166,9 +166,33 @@ namespace XNode {
                 }
             }
             return fieldInfo;
-        }
+		}
 
-        private static void CachePorts(System.Type nodeType) {
+#if ODIN_INSPECTOR
+		public static List<PropertyInfo> GetNodeProperties( System.Type nodeType )
+		{
+			List<System.Reflection.PropertyInfo> propertyInfo = new List<System.Reflection.PropertyInfo>( nodeType.GetProperties( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance ) );
+
+			// GetProperties doesnt return inherited private properties, so walk through base types and pick those up
+			System.Type tempType = nodeType;
+			while ( ( tempType = tempType.BaseType ) != typeof( XNode.Node ) )
+			{
+				PropertyInfo[] parentProperties = tempType.GetProperties( BindingFlags.NonPublic | BindingFlags.Instance );
+				for ( int i = 0; i < parentProperties.Length; i++ )
+				{
+					// Ensure that we do not already have a member with this type and name
+					PropertyInfo parentProperty = parentProperties[i];
+					if ( propertyInfo.TrueForAll( x => x.Name != parentProperty.Name ) )
+					{
+						propertyInfo.Add( parentProperty );
+					}
+				}
+			}
+			return propertyInfo;
+		}
+#endif
+
+		private static void CachePorts(System.Type nodeType) {
             List<System.Reflection.FieldInfo> fieldInfo = GetNodeFields(nodeType);
 
             for (int i = 0; i < fieldInfo.Count; i++) {
@@ -186,7 +210,35 @@ namespace XNode {
                     portDataCache[nodeType].Add(new NodePort(fieldInfo[i]));
                 }
             }
-        }
+
+#if ODIN_INSPECTOR
+			// Make an assumption that ShowOdinSerializedPropertiesInInspector means an object supports this
+			bool supportsPropertyPorts = nodeType.GetCustomAttribute<Sirenix.OdinInspector.ShowOdinSerializedPropertiesInInspectorAttribute>() != null;
+			List<System.Reflection.PropertyInfo> propertyInfo = GetNodeProperties( nodeType );
+
+			for ( int i = 0; i < propertyInfo.Count; i++ ) {
+
+				//Get InputAttribute and OutputAttribute
+				object[] attribs = propertyInfo[i].GetCustomAttributes( true );
+				Node.InputAttribute inputAttrib = attribs.FirstOrDefault( x => x is Node.InputAttribute ) as Node.InputAttribute;
+				Node.OutputAttribute outputAttrib = attribs.FirstOrDefault( x => x is Node.OutputAttribute ) as Node.OutputAttribute;
+
+				if ( inputAttrib == null && outputAttrib == null ) continue;
+
+				if ( inputAttrib != null && outputAttrib != null ) Debug.LogError( "Field " + propertyInfo[i].Name + " of type " + nodeType.FullName + " cannot be both input and output." );
+				else
+				{
+					if ( !supportsPropertyPorts ) {
+						Debug.LogError( "This Node type does not support properties as ports. Is this type serialized by Odin and includes the ShowOdinSerializedPropertiesInInspector attribute?" );
+					}
+					else {
+						if ( !portDataCache.ContainsKey( nodeType ) ) portDataCache.Add( nodeType, new List<NodePort>() );
+						portDataCache[nodeType].Add( new NodePort( propertyInfo[i] ) );
+					}
+				}
+			}
+#endif
+		}
 
         [System.Serializable]
         private class PortDataCache : Dictionary<System.Type, List<NodePort>>, ISerializationCallbackReceiver {
@@ -208,7 +260,7 @@ namespace XNode {
                 this.Clear();
 
                 if (keys.Count != values.Count)
-                    throw new System.Exception(string.Format("there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable."));
+                    throw new System.Exception(string.Format("there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable.", keys.Count, values.Count));
 
                 for (int i = 0; i < keys.Count; i++)
                     this.Add(keys[i], values[i]);

@@ -81,6 +81,25 @@ namespace XNode {
             }
         }
 
+        /// <summary> Construct a static targetless nodeport. Used as a template. </summary>
+        public NodePort(PropertyInfo propertyInfo) {
+            _fieldName = propertyInfo.Name;
+            ValueType = propertyInfo.PropertyType;
+            _dynamic = false;
+            var attribs = propertyInfo.GetCustomAttributes(false);
+            for (int i = 0; i < attribs.Length; i++) {
+                if (attribs[i] is Node.InputAttribute) {
+                    _direction = IO.Input;
+                    _connectionType = (attribs[i] as Node.InputAttribute).connectionType;
+                    _typeConstraint = (attribs[i] as Node.InputAttribute).typeConstraint;
+                } else if (attribs[i] is Node.OutputAttribute) {
+                    _direction = IO.Output;
+                    _connectionType = (attribs[i] as Node.OutputAttribute).connectionType;
+                    _typeConstraint = (attribs[i] as Node.OutputAttribute).typeConstraint;
+                }
+            }
+        }
+
         /// <summary> Copy a nodePort but assign it to another node. </summary>
         public NodePort(NodePort nodePort, Node node) {
             _fieldName = nodePort._fieldName;

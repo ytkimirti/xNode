@@ -267,7 +267,11 @@ namespace XNode {
 		[Sirenix.OdinInspector.DontApplyToListElements]
 #endif
         /// <summary> Mark a serializable field as an input port. You can access this through <see cref="GetInputPort(string)"/> </summary>
-        [AttributeUsage(AttributeTargets.Field)]
+        [AttributeUsage(AttributeTargets.Field
+#if ODIN_INSPECTOR
+			| AttributeTargets.Property
+#endif
+		)]
         public class InputAttribute : Attribute {
             public ShowBackingValue backingValue;
             public ConnectionType connectionType;
@@ -293,7 +297,11 @@ namespace XNode {
 		[Sirenix.OdinInspector.DontApplyToListElements]
 #endif
         /// <summary> Mark a serializable field as an output port. You can access this through <see cref="GetOutputPort(string)"/> </summary>
-        [AttributeUsage(AttributeTargets.Field)]
+        [AttributeUsage(AttributeTargets.Field
+#if ODIN_INSPECTOR
+			| AttributeTargets.Property
+#endif
+		)]
         public class OutputAttribute : Attribute {
             public ShowBackingValue backingValue;
             public ConnectionType connectionType;
