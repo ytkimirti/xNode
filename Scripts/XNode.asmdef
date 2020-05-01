@@ -1,7 +1,8 @@
 {
     "name": "XNode",
-    "references": [],
-    "optionalUnityReferences": [],
+    "references": [
+        "Sirenix.OdinInspector.Attributes"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

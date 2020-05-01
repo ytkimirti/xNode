@@ -1,9 +1,11 @@
-﻿{
+{
     "name": "XNodeEditor",
     "references": [
-        "XNode"
+        "XNode",
+        "Sirenix.OdinInspector.Editor",
+        "Sirenix.Utilities",
+        "Sirenix.Utilities.Editor"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],

@@ -332,6 +332,10 @@ namespace XNodeEditor {
 
             NodeEditorWindow w = GetWindow(typeof(NodeEditorWindow), false, "xNode", true) as NodeEditorWindow;
             w.wantsMouseMove = true;
+
+            if ( graph != w.graph && w.graph != null )
+                NodeEditor.ClearEditors( w );
+
             w.graph = graph;
             return w;
         }
