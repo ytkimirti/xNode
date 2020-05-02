@@ -330,7 +330,8 @@ namespace XNodeEditor {
         public static NodeEditorWindow Open(XNode.NodeGraph graph) {
             if (!graph) return null;
 
-            NodeEditorWindow w = GetWindow(typeof(NodeEditorWindow), false, "xNode", true) as NodeEditorWindow;
+            bool openNewWindow = ( Event.current.modifiers & EventModifiers.Alt ) == EventModifiers.Alt;
+            NodeEditorWindow w = openNewWindow ? CreateWindow<NodeEditorWindow>("xNode") : GetWindow<NodeEditorWindow>("xNode");
             w.wantsMouseMove = true;
 
             if ( graph != w.graph && w.graph != null )
@@ -338,6 +339,7 @@ namespace XNodeEditor {
 
             w.titleContent = new GUIContent( graph.name );
             w.graph = graph;
+            w.Focus();
             return w;
         }
 
