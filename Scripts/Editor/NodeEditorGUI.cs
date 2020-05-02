@@ -37,6 +37,11 @@ namespace XNodeEditor {
 		}
 
         protected virtual void OnGUI() {
+#if ODIN_INSPECTOR
+            if ( !OdinInspectorHelper.IsReady )
+                return;
+#endif
+
             Event e = Event.current;
             Matrix4x4 m = GUI.matrix;
             if (graph == null) return;

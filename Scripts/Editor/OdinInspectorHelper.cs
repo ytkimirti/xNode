@@ -14,8 +14,11 @@ namespace XNodeEditor
             EditorApplication.delayCall += () =>
             {
                 IsOdinExtensionLoaded = AssemblyUtilities.GetAllAssemblies().FirstOrDefault( x => x.GetName().Name == "XNodeEditorOdin" ) != null;
+                IsReady = true;
             };
         }
+
+        public static bool IsReady { get; private set; }
 
         private static bool IsOdinExtensionLoaded;
 
