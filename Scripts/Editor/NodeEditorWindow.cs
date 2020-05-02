@@ -336,6 +336,7 @@ namespace XNodeEditor {
             if ( graph != w.graph && w.graph != null )
                 NodeEditor.ClearEditors( w );
 
+            w.titleContent = new GUIContent( graph.name );
             w.graph = graph;
             return w;
         }
