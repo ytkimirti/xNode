@@ -144,8 +144,30 @@ namespace XNodeEditor {
 
         /// <summary> Show right-click context menu for hovered port </summary>
         void ShowPortContextMenu(XNode.NodePort hoveredPort) {
+            if ( hoveredPort.ConnectionCount == 0 )
+                return;
+
             GenericMenu contextMenu = new GenericMenu();
             contextMenu.AddItem(new GUIContent("Clear Connections"), false, () => hoveredPort.ClearConnections());
+            contextMenu.AddSeparator( string.Empty );
+
+            for ( int i = 0; i < hoveredPort.ConnectionCount; ++i ) {
+                XNode.NodePort connection = hoveredPort.GetConnection( i );
+                if ( connection == null ) {
+                    contextMenu.AddItem( new GUIContent( "Remove blank connections" ), false, () => hoveredPort.VerifyConnections() );
+                    break;
+                }
+            }
+
+            for ( int i = 0; i < hoveredPort.ConnectionCount; ++i ) {
+                XNode.NodePort connection = hoveredPort.GetConnection( i );
+                if ( connection == null ) // Connection exists but isn't actually connected
+                    continue;
+
+                int connectionIndex = i;
+                contextMenu.AddItem( new GUIContent( $"Disconnect {connectionIndex} {connection.node.name}:{connection.fieldName}" ), false, () => hoveredPort.Disconnect( connectionIndex ) );
+            }
+
             contextMenu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
             if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
         }
