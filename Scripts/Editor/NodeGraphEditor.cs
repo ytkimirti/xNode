@@ -138,7 +138,7 @@ namespace XNodeEditor {
 
         /// <summary> Returned color is used to color ports </summary>
         public virtual Color GetPortColor(XNode.NodePort port) {
-            return GetTypeColor(port.ValueType);
+            return GetSelectedTypeColor(port.ValueType);
         }
 
         /// <summary> Returns generated color for a type. This color is editable in preferences </summary>
