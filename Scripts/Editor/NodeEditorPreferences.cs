@@ -281,7 +281,7 @@ namespace XNodeEditor {
                 }
                 else
                 {
-                    DefaultNoodleColorAttribute defaultColorsAttribute = type.GetCustomAttributes( typeof( DefaultNoodleColorAttribute ), false ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
+                    DefaultNoodleColorAttribute defaultColorsAttribute = System.ComponentModel.TypeDescriptor.GetAttributes( type ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
                     if ( defaultColorsAttribute == null )
                     {
 #if UNITY_5_4_OR_NEWER
@@ -324,7 +324,7 @@ namespace XNodeEditor {
                 }
                 else
                 {
-                    DefaultNoodleColorAttribute defaultColorsAttribute = type.GetCustomAttributes( typeof( DefaultNoodleColorAttribute ), false ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
+                    DefaultNoodleColorAttribute defaultColorsAttribute = System.ComponentModel.TypeDescriptor.GetAttributes( type ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
                     if ( defaultColorsAttribute == null )
                     {
 #if UNITY_5_4_OR_NEWER
