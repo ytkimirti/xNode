@@ -328,7 +328,7 @@ namespace XNode {
             if (otherPort != null) {
                 for (int k = 0; k < otherPort.connections.Count; k++) {
                     if (otherPort.connections[k].Port == this) {
-                        otherPort.connections.RemoveAt(i);
+                        otherPort.connections.RemoveAt(k);
                     }
                 }
             }
