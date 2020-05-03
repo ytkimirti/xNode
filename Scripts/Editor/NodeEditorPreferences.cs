@@ -281,15 +281,27 @@ namespace XNodeEditor {
                 }
                 else
                 {
+                    DefaultNoodleColorAttribute defaultColorsAttribute = type.GetCustomAttributes( typeof( DefaultNoodleColorAttribute ), false ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
+                    if ( defaultColorsAttribute == null )
+                    {
 #if UNITY_5_4_OR_NEWER
-                    UnityEngine.Random.InitState( typeName.GetHashCode() );
+                        UnityEngine.Random.InitState( typeName.GetHashCode() );
 #else
-                    UnityEngine.Random.seed = typeName.GetHashCode();
+                        UnityEngine.Random.seed = typeName.GetHashCode();
 #endif
-                    selectedCol = new Color( UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value );
-                    col = new Color( selectedCol.r * 0.6f, selectedCol.g * 0.6f, selectedCol.b * 0.6f );
-                    typeSelectedColors[type] = selectedCol;
-                    typeColors.Add( type, col );
+
+                        selectedCol = new Color( UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value );
+                        col = new Color( selectedCol.r * 0.6f, selectedCol.g * 0.6f, selectedCol.b * 0.6f );
+                        typeSelectedColors[type] = selectedCol;
+                        typeColors.Add( type, col );
+                    }
+                    else
+                    {
+                        selectedCol = defaultColorsAttribute.SelectedColor;
+                        col = defaultColorsAttribute.Color;
+                        typeSelectedColors[type] = selectedCol;
+                        typeColors.Add( type, col );
+                    }
                 }
 			}
 			return col;
@@ -300,8 +312,9 @@ namespace XNodeEditor {
 		{
 			VerifyLoaded();
 			if ( type == null ) return Color.gray;
-			Color col;
-			if ( !typeSelectedColors.TryGetValue( type, out col ) )
+            Color col;
+            Color selectedCol;
+            if ( !typeSelectedColors.TryGetValue( type, out selectedCol ) )
 			{
 				string typeName = type.PrettyName();
                 if ( settings[lastKey].typeSelectedColors.ContainsKey( typeName ) )
@@ -311,16 +324,30 @@ namespace XNodeEditor {
                 }
                 else
                 {
+                    DefaultNoodleColorAttribute defaultColorsAttribute = type.GetCustomAttributes( typeof( DefaultNoodleColorAttribute ), false ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
+                    if ( defaultColorsAttribute == null )
+                    {
 #if UNITY_5_4_OR_NEWER
-                    UnityEngine.Random.InitState( typeName.GetHashCode() );
+                        UnityEngine.Random.InitState( typeName.GetHashCode() );
 #else
-                    UnityEngine.Random.seed = typeName.GetHashCode();
+                        UnityEngine.Random.seed = typeName.GetHashCode();
 #endif
-                    col = new Color( UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value );
-                    typeSelectedColors.Add( type, col );
+
+                        selectedCol = new Color( UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value );
+                        col = new Color( selectedCol.r * 0.6f, selectedCol.g * 0.6f, selectedCol.b * 0.6f );
+                        typeSelectedColors[type] = selectedCol;
+                        typeColors.Add( type, col );
+                    }
+                    else
+                    {
+                        selectedCol = defaultColorsAttribute.SelectedColor;
+                        col = defaultColorsAttribute.Color;
+                        typeSelectedColors[type] = selectedCol;
+                        typeColors.Add( type, col );
+                    }
                 }
 			}
-			return col;
+			return selectedCol;
 		}
 	}
 }
