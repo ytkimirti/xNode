@@ -306,8 +306,11 @@ namespace XNodeEditor {
 
             int nodeIndex = graph.nodes.IndexOf( node );
             int indexToMove = orderedNodeIndices.IndexOf( nodeIndex );
-            orderedNodeIndices.RemoveAt( indexToMove );
-            orderedNodeIndices.Insert( orderedNodeIndices.Count, nodeIndex );
+            if ( indexToMove >= 0 )
+            {
+                orderedNodeIndices.RemoveAt( indexToMove );
+                orderedNodeIndices.Insert( orderedNodeIndices.Count, nodeIndex );
+            }
 		}
 
         public void DeselectNode(XNode.Node node) {
