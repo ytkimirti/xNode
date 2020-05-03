@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -231,20 +232,28 @@ namespace XNodeEditor {
                 string typeName = type.PrettyName();
                 if (settings[lastKey].typeColors.ContainsKey(typeName)) typeColors.Add(type, settings[lastKey].typeColors[typeName]);
                 else {
+                    DefaultNoodleColorAttribute defaultColorsAttribute = System.ComponentModel.TypeDescriptor.GetAttributes( type ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
+                    if ( defaultColorsAttribute == null ) {
 #if UNITY_5_4_OR_NEWER
-                    UnityEngine.Random.State oldState = UnityEngine.Random.state;
-                    UnityEngine.Random.InitState(typeName.GetHashCode());
+                        UnityEngine.Random.State oldState = UnityEngine.Random.state;
+                        UnityEngine.Random.InitState(typeName.GetHashCode());
 #else
-                    int oldSeed = UnityEngine.Random.seed;
-                    UnityEngine.Random.seed = typeName.GetHashCode();
+                        int oldSeed = UnityEngine.Random.seed;
+                        UnityEngine.Random.seed = typeName.GetHashCode();
 #endif
-                    col = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
-                    typeColors.Add(type, col);
+                        col = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+                        typeColors.Add(type, col);
+
 #if UNITY_5_4_OR_NEWER
-                    UnityEngine.Random.state = oldState;
+                        UnityEngine.Random.state = oldState;
 #else
-                    UnityEngine.Random.seed = oldSeed;
+                        UnityEngine.Random.seed = oldSeed;
 #endif
+                    }
+                    else {
+                        col = defaultColorsAttribute.Color;
+                        typeColors.Add( type, col );
+                    }
                 }
             }
             return col;
