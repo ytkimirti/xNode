@@ -375,8 +375,6 @@ namespace XNodeEditor {
                 //If a null node is found, return. This can happen if the nodes associated script is deleted. It is currently not possible in Unity to delete a null asset.
                 if (node == null) continue;
 
-                bool selected = selectionCache != null && selectionCache.Contains(node) || NodeEditorWindow.IsHighlighted(node);
-
                 // Draw full connections and output > reroute
                 foreach (XNode.NodePort output in node.Outputs) {
                     //Needs cleanup. Null checks are ugly
@@ -386,6 +384,9 @@ namespace XNodeEditor {
                     Color portColor = graphEditor.GetPortColor(output);
                     for (int k = 0; k < output.ConnectionCount; k++) {
                         XNode.NodePort input = output.GetConnection(k);
+
+                        bool selected = selectionCache != null && ( selectionCache.Contains( node ) || NodeEditorWindow.IsHighlighted( node ) )
+                            || ( input != null && ( selectionCache.Contains( input.node ) || NodeEditorWindow.IsHighlighted( input.node ) ) );
 
                         Gradient noodleGradient = graphEditor.GetNoodleGradient(selected, output, input);
                         float noodleThickness = graphEditor.GetNoodleThickness(selected, output, input);
