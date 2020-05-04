@@ -170,6 +170,8 @@ namespace XNodeEditor {
 #if UNITY_2019_1_OR_NEWER
         [SettingsProvider]
         public static SettingsProvider CreateXNodeSettingsProvider() {
+            if ( GetSettingsOverride != GetSettingsInternal )
+                return null;
             SettingsProvider provider = new SettingsProvider("Preferences/Node Editor", SettingsScope.User) {
                 guiHandler = (searchContext) => { XNodeEditor.NodeEditorPreferences.PreferencesGUI(); },
                 keywords = new HashSet<string>(new [] { "xNode", "node", "editor", "graph", "connections", "noodles", "ports" })
