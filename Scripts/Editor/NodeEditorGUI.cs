@@ -385,8 +385,8 @@ namespace XNodeEditor {
                     for (int k = 0; k < output.ConnectionCount; k++) {
                         XNode.NodePort input = output.GetConnection(k);
 
-                        bool selected = selectionCache != null && ( selectionCache.Contains( node ) || NodeEditorWindow.IsHighlighted( node ) )
-                            || ( input != null && ( selectionCache.Contains( input.node ) || NodeEditorWindow.IsHighlighted( input.node ) ) );
+                        bool selected = selectionCache != null && ( ( selectionCache.Contains( node ) || NodeEditorWindow.IsHighlighted( node ) )
+                            || ( input != null && ( selectionCache.Contains( input.node ) || NodeEditorWindow.IsHighlighted( input.node ) ) ) );
 
                         Gradient noodleGradient = graphEditor.GetNoodleGradient(selected, output, input);
                         float noodleThickness = graphEditor.GetNoodleThickness(selected, output, input);
