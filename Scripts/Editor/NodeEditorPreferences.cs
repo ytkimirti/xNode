@@ -42,8 +42,57 @@ namespace XNodeEditor {
             public bool portTooltips = true;
             [SerializeField] private string typeColorsData = "";
             [SerializeField] private string typeSelectedColorsData = "";
-            [NonSerialized] public Dictionary<string, Color> typeColors = new Dictionary<string, Color>();
-            [NonSerialized] public Dictionary<string, Color> typeSelectedColors = new Dictionary<string, Color>();
+            [NonSerialized] private Dictionary<string, Color> typeColors = null;
+            public Dictionary<string, Color> TypeColors
+            {
+                get
+                {
+                    if ( typeColors == null )
+                    {
+				        // Deserialize typeColorsData
+                        typeColors = new Dictionary<string, Color>();
+                        string[] data = typeColorsData.Split( new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries );
+                        for ( int i = 0; i < data.Length; i += 2 )
+                        {
+                            Color col;
+                            if ( ColorUtility.TryParseHtmlString( "#" + data[i + 1], out col ) )
+                            {
+                                typeColors.Add( data[i], col );
+                            }
+                        }
+                    }
+                    return typeColors;
+                }
+                set
+                {
+                }
+            }
+
+            [NonSerialized] private Dictionary<string, Color> typeSelectedColors = null;
+            public Dictionary<string, Color> TypeSelectedColors
+            {
+                get
+                {
+                    if ( typeSelectedColors == null )
+                    {
+                        // Deserialize typeSelectedColorsData
+                        typeSelectedColors = new Dictionary<string, Color>();
+                        string[] data = typeSelectedColorsData.Split( new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries );
+                        for ( int i = 0; i < data.Length; i += 2 )
+                        {
+                            Color col;
+                            if ( ColorUtility.TryParseHtmlString( "#" + data[i + 1], out col ) )
+                            {
+                                typeSelectedColors.Add( data[i], col );
+                            }
+                        }
+                    }
+                    return typeSelectedColors;
+                }
+                set
+                {
+                }
+            }
 
             [FormerlySerializedAs("noodleType")] public NoodlePath noodlePath = NoodlePath.Curvy;
             public NoodleStroke noodleStroke = NoodleStroke.Full;
@@ -65,42 +114,21 @@ namespace XNodeEditor {
 
 			public void OnAfterDeserialize()
 			{
-				// Deserialize typeColorsData
-				typeColors = new Dictionary<string, Color>();
-				string[] data = typeColorsData.Split( new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries );
-				for ( int i = 0; i < data.Length; i += 2 )
-				{
-					Color col;
-					if ( ColorUtility.TryParseHtmlString( "#" + data[i + 1], out col ) )
-					{
-						typeColors.Add( data[i], col );
-					}
-				}
-
-				// Deserialize typeSelectedColorsData
-				typeSelectedColors = new Dictionary<string, Color>();
-				data = typeSelectedColorsData.Split( new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries );
-				for ( int i = 0; i < data.Length; i += 2 )
-				{
-					Color col;
-					if ( ColorUtility.TryParseHtmlString( "#" + data[i + 1], out col ) )
-					{
-						typeSelectedColors.Add( data[i], col );
-					}
-				}
 			}
 
 			public void OnBeforeSerialize()
 			{
-				// Serialize typeColors
+                // Serialize typeColors
+                TypeColors.Any();
 				typeColorsData = "";
 				foreach ( var item in typeColors )
 				{
 					typeColorsData += item.Key + "," + ColorUtility.ToHtmlStringRGB( item.Value ) + ",";
 				}
 
-				// Serialize typeSelectedColors
-				typeSelectedColorsData = "";
+                // Serialize typeSelectedColors
+                TypeSelectedColors.Any();
+                typeSelectedColorsData = "";
 				foreach ( var item in typeSelectedColors )
 				{
 					typeSelectedColorsData += item.Key + "," + ColorUtility.ToHtmlStringRGB( item.Value ) + ",";
@@ -108,8 +136,24 @@ namespace XNodeEditor {
 			}
 		}
 
-		/// <summary> Get settings of current active editor </summary>
+        private static Func<string,Settings> GetSettingsOverride = GetSettingsInternal;
+        public static void SetSettingsOverride( Func<string, Settings> settingsOverride )
+        {
+            GetSettingsOverride = settingsOverride;
+        }
+
+        /// <summary> Get settings of current active editor </summary>
         public static Settings GetSettings() {
+            return GetSettingsInternal();
+        }
+
+        private static Settings GetSettingsInternal( string key ) {
+            if ( !settings.ContainsKey( lastKey ) ) VerifyLoaded();
+            return settings[lastKey];
+        }
+
+        /// <summary> Get settings of current active editor </summary>
+        private static Settings GetSettingsInternal() {
             if (XNodeEditor.NodeEditorWindow.current == null) return new Settings();
 
             if (lastEditor != XNodeEditor.NodeEditorWindow.current.graphEditor) {
@@ -120,8 +164,7 @@ namespace XNodeEditor {
                     lastKey = attrib.editorPrefsKey;
                 } else return null;
             }
-            if (!settings.ContainsKey(lastKey)) VerifyLoaded();
-            return settings[lastKey];
+            return GetSettingsOverride( lastKey );
         }
 
 #if UNITY_2019_1_OR_NEWER
@@ -222,12 +265,12 @@ namespace XNodeEditor {
 				if ( EditorGUI.EndChangeCheck() )
 				{
 					typeColors[type] = col;
-					if ( settings.typeColors.ContainsKey( typeColorKey ) ) settings.typeColors[typeColorKey] = col;
-					else settings.typeColors.Add( typeColorKey, col );
+					if ( settings.TypeColors.ContainsKey( typeColorKey ) ) settings.TypeColors[typeColorKey] = col;
+					else settings.TypeColors.Add( typeColorKey, col );
 
 					typeSelectedColors[type] = selectedCol;
-					if ( settings.typeSelectedColors.ContainsKey( typeColorKey ) ) settings.typeSelectedColors[typeColorKey] = selectedCol;
-					else settings.typeSelectedColors.Add( typeColorKey, selectedCol );
+					if ( settings.TypeSelectedColors.ContainsKey( typeColorKey ) ) settings.TypeSelectedColors[typeColorKey] = selectedCol;
+					else settings.TypeSelectedColors.Add( typeColorKey, selectedCol );
 
 					SavePrefs( key, settings );
 					NodeEditorWindow.RepaintAll();
@@ -274,10 +317,10 @@ namespace XNodeEditor {
 			if ( !typeColors.TryGetValue( type, out col ) )
 			{
 				string typeName = type.PrettyName();
-                if ( settings[lastKey].typeColors.ContainsKey( typeName ) )
+                if ( settings[lastKey].TypeColors.ContainsKey( typeName ) )
                 {
-                    typeColors.Add( type, settings[lastKey].typeColors[typeName] );
-                    typeSelectedColors.Add( type, settings[lastKey].typeSelectedColors[typeName] );
+                    typeColors.Add( type, settings[lastKey].TypeColors[typeName] );
+                    typeSelectedColors.Add( type, settings[lastKey].TypeSelectedColors[typeName] );
                 }
                 else
                 {
@@ -317,10 +360,10 @@ namespace XNodeEditor {
             if ( !typeSelectedColors.TryGetValue( type, out selectedCol ) )
 			{
 				string typeName = type.PrettyName();
-                if ( settings[lastKey].typeSelectedColors.ContainsKey( typeName ) )
+                if ( settings[lastKey].TypeSelectedColors.ContainsKey( typeName ) )
                 {
-                    typeColors.Add( type, settings[lastKey].typeColors[typeName] );
-                    typeSelectedColors.Add( type, settings[lastKey].typeSelectedColors[typeName] );
+                    typeColors.Add( type, settings[lastKey].TypeColors[typeName] );
+                    typeSelectedColors.Add( type, settings[lastKey].TypeSelectedColors[typeName] );
                 }
                 else
                 {
