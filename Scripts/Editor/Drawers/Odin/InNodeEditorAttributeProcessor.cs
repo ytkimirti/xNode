@@ -21,6 +21,7 @@ namespace XNodeEditor {
 					case "graph":
 					case "position":
 					case "ports":
+					case "folded":
 						return true;
 
 					default:
@@ -36,7 +37,8 @@ namespace XNodeEditor {
 				case "graph":
 				case "position":
 				case "ports":
-					attributes.Add(new HideInInspector());
+                case "folded":
+                    attributes.Add(new HideInInspector());
 					break;
 
 				default:
