@@ -25,11 +25,11 @@ namespace XNodeEditor {
         public virtual void OnWindowFocusLost() { }
 
         public virtual Texture2D GetGridTexture() {
-            return NodeEditorPreferences.GetSettings().gridTexture;
+            return NodeEditorPreferences.GetSettings().GetGridTexture();
         }
 
         public virtual Texture2D GetSecondaryGridTexture() {
-            return NodeEditorPreferences.GetSettings().crossTexture;
+            return NodeEditorPreferences.GetSettings().GetCrossTexture();
         }
 
         /// <summary> Return default settings for this graph type. This is the settings the user will load if no previous settings have been saved. </summary>
@@ -129,11 +129,11 @@ namespace XNodeEditor {
         }
 
         public virtual NoodlePath GetNoodlePath(XNode.NodePort output, XNode.NodePort input) {
-            return NodeEditorPreferences.GetSettings().noodlePath;
+            return NodeEditorPreferences.GetSettings().NoodlePath;
         }
 
         public virtual NoodleStroke GetNoodleStroke(XNode.NodePort output, XNode.NodePort input) {
-            return NodeEditorPreferences.GetSettings().noodleStroke;
+            return NodeEditorPreferences.GetSettings().NoodleStroke;
         }
 
         /// <summary> Returned color is used to color ports </summary>
@@ -175,7 +175,7 @@ namespace XNodeEditor {
             node.position = position;
             if (node.name == null || node.name.Trim() == "") node.name = NodeEditorUtilities.NodeDefaultName(type);
             if (!string.IsNullOrEmpty(AssetDatabase.GetAssetPath(target))) AssetDatabase.AddObjectToAsset(node, target);
-            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             NodeEditorWindow.RepaintAll();
             return node;
         }
@@ -187,7 +187,7 @@ namespace XNodeEditor {
             Undo.RegisterCreatedObjectUndo(node, "Duplicate Node");
             node.name = original.name;
             AssetDatabase.AddObjectToAsset(node, target);
-            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             return node;
         }
 
@@ -217,7 +217,7 @@ namespace XNodeEditor {
                     Undo.RecordObject(conn.node, "Delete Node");
             target.RemoveNode(node);
             Undo.DestroyObjectImmediate(node);
-            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
         }
 
         [AttributeUsage(AttributeTargets.Class)]

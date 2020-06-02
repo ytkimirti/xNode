@@ -179,7 +179,7 @@ namespace XNodeEditor {
 		public XNode.NodeGraph graph;
 		public Vector2 panOffset { get { return _panOffset; } set { _panOffset = value; Repaint(); } }
 		private Vector2 _panOffset;
-		public float zoom { get { return _zoom; } set { _zoom = Mathf.Clamp( value, NodeEditorPreferences.GetSettings().minZoom, NodeEditorPreferences.GetSettings().maxZoom ); Repaint(); } }
+		public float zoom { get { return _zoom; } set { _zoom = Mathf.Clamp( value, NodeEditorPreferences.GetSettings().MinZoom, NodeEditorPreferences.GetSettings().MaxZoom ); Repaint(); } }
 		private float _zoom = 1;
 
         void OnFocus() {
@@ -187,7 +187,7 @@ namespace XNodeEditor {
             ValidateGraphEditor();
             if (graphEditor != null) {
                 graphEditor.OnWindowFocus();
-                if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+                if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             }
         }
         
@@ -230,7 +230,7 @@ namespace XNodeEditor {
         public void Save() {
             if (AssetDatabase.Contains(graph)) {
                 EditorUtility.SetDirty(graph);
-                if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+                if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             } else SaveAs();
         }
 
@@ -242,7 +242,7 @@ namespace XNodeEditor {
                 if (existingGraph != null) AssetDatabase.DeleteAsset(path);
                 AssetDatabase.CreateAsset(graph, path);
                 EditorUtility.SetDirty(graph);
-                if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+                if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             }
         }
 

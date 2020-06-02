@@ -138,8 +138,12 @@ namespace XNodeEditor {
         void ShowRerouteContextMenu(RerouteReference reroute) {
             GenericMenu contextMenu = new GenericMenu();
             contextMenu.AddItem(new GUIContent("Remove"), false, () => reroute.RemovePoint());
+#if ODIN_INSPECTOR
+            contextMenu.DisplayAsSelector(new Rect(Event.current.mousePosition, Vector2.zero));
+#else
             contextMenu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
-            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+#endif
+            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
         }
 
         /// <summary> Show right-click context menu for hovered port </summary>
@@ -168,8 +172,12 @@ namespace XNodeEditor {
                 contextMenu.AddItem( new GUIContent( $"Disconnect {connectionIndex} {connection.node.name}:{connection.fieldName}" ), false, () => hoveredPort.Disconnect( connectionIndex ) );
             }
 
+#if ODIN_INSPECTOR
+            contextMenu.DisplayAsSelector( new Rect( Event.current.mousePosition, Vector2.zero ) );
+#else
             contextMenu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
-            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+#endif
+            if ( NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
         }
 
         static Vector2 CalculateBezierPoint(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t) {
@@ -417,7 +425,7 @@ namespace XNodeEditor {
 
                             // Draw selected reroute points with an outline
                             if (selectedReroutes.Contains(rerouteRef)) {
-                                GUI.color = NodeEditorPreferences.GetSettings().highlightColor;
+                                GUI.color = NodeEditorPreferences.GetSettings().HighlightColor;
                                 GUI.DrawTexture(rect, NodeEditorResources.dotOuter);
                             }
 
@@ -525,7 +533,7 @@ namespace XNodeEditor {
                     style.padding = new RectOffset();
                     GUI.color = nodeEditor.GetTint();
                     GUILayout.BeginVertical(style);
-                    GUI.color = NodeEditorPreferences.GetSettings().highlightColor;
+                    GUI.color = NodeEditorPreferences.GetSettings().HighlightColor;
                     GUILayout.BeginVertical(new GUIStyle(highlightStyle));
                 } else {
                     GUIStyle style = new GUIStyle(nodeEditor.GetBodyStyle());
@@ -619,7 +627,7 @@ namespace XNodeEditor {
         }
 
         private void DrawTooltip() {
-            if (hoveredPort != null && NodeEditorPreferences.GetSettings().portTooltips && graphEditor != null) {
+            if (hoveredPort != null && NodeEditorPreferences.GetSettings().PortTooltips && graphEditor != null) {
                 string tooltip = graphEditor.GetPortTooltip(hoveredPort);
                 if (string.IsNullOrEmpty(tooltip)) return;
                 GUIContent content = new GUIContent(tooltip);

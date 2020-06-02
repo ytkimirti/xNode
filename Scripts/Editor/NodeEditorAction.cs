@@ -53,7 +53,7 @@ namespace XNodeEditor {
                     float oldZoom = zoom;
                     if (e.delta.y > 0) zoom += 0.1f * zoom;
                     else zoom -= 0.1f * zoom;
-                    if (NodeEditorPreferences.GetSettings().zoomToMouse) panOffset += (1 - oldZoom / zoom) * (WindowToGridPosition(e.mousePosition) + panOffset);
+                    if (NodeEditorPreferences.GetSettings().ZoomToMouse) panOffset += (1 - oldZoom / zoom) * (WindowToGridPosition(e.mousePosition) + panOffset);
                     break;
                 case EventType.MouseDrag:
                     if (e.button == 0) {
@@ -72,7 +72,7 @@ namespace XNodeEditor {
                         }
                         if (currentActivity == NodeActivity.DragNode) {
                             // Holding ctrl inverts grid snap
-                            bool gridSnap = NodeEditorPreferences.GetSettings().gridSnap;
+                            bool gridSnap = NodeEditorPreferences.GetSettings().GridSnap;
                             if (e.control) gridSnap = !gridSnap;
 
                             Vector2 mousePos = WindowToGridPosition(e.mousePosition);
@@ -218,27 +218,31 @@ namespace XNodeEditor {
                                 }
                             }
                             // Open context menu for auto-connection if there is no target node
-                            else if (draggedOutputTarget == null && NodeEditorPreferences.GetSettings().dragToCreate && autoConnectOutput != null) {
+                            else if (draggedOutputTarget == null && NodeEditorPreferences.GetSettings().DragToCreate && autoConnectOutput != null) {
                                 GenericMenu menu = new GenericMenu();
                                 graphEditor.AddContextMenuItems(menu);
+#if ODIN_INSPECTOR
+                                menu.DisplayAsSelector( new Rect( Event.current.mousePosition, Vector2.zero ) );
+#else
                                 menu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
+#endif
                             }
                             //Release dragged connection
                             draggedOutput = null;
                             draggedOutputTarget = null;
                             EditorUtility.SetDirty(graph);
-                            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+                            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
                         } else if (currentActivity == NodeActivity.DragNode) {
                             IEnumerable<XNode.Node> nodes = Selection.objects.Where(x => x is XNode.Node).Select(x => x as XNode.Node);
                             foreach (XNode.Node node in nodes) EditorUtility.SetDirty(node);
-                            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+                            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
                         } else if (!IsHoveringNode) {
                             // If click outside node, release field focus
                             if (!isPanning) {
                                 EditorGUI.FocusTextInControl(null);
                                 EditorGUIUtility.editingTextField = false;
                             }
-                            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+                            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
                         }
 
                         // If click node header, select it.
@@ -277,13 +281,21 @@ namespace XNodeEditor {
                                 autoConnectOutput = null;
                                 GenericMenu menu = new GenericMenu();
                                 NodeEditor.GetEditor(hoveredNode, this).AddContextMenuItems(menu);
+#if ODIN_INSPECTOR
+                                menu.DisplayAsSelector( new Rect( Event.current.mousePosition, Vector2.zero ) );
+#else
                                 menu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
+#endif
                                 e.Use(); // Fixes copy/paste context menu appearing in Unity 5.6.6f2 - doesn't occur in 2018.3.2f1 Probably needs to be used in other places.
                             } else if (!IsHoveringNode) {
                                 autoConnectOutput = null;
                                 GenericMenu menu = new GenericMenu();
                                 graphEditor.AddContextMenuItems(menu);
+#if ODIN_INSPECTOR
+                                menu.DisplayAsSelector( new Rect( Event.current.mousePosition, Vector2.zero ) );
+#else
                                 menu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
+#endif
                             }
                         }
                         isPanning = false;
@@ -540,7 +552,7 @@ namespace XNodeEditor {
 
             // Save changes
             EditorUtility.SetDirty(graph);
-            if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
+            if (NodeEditorPreferences.GetSettings().AutoSave) AssetDatabase.SaveAssets();
             autoConnectOutput = null;
         }
     }

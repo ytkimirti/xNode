@@ -9,6 +9,66 @@ namespace XNodeEditor {
     public enum NoodlePath { Curvy, Straight, Angled, ShaderLab }
     public enum NoodleStroke { Full, Dashed }
 
+    public interface INodePreferenceSettings
+    {
+        Color32 GridBGColor { get; set; }
+        Color32 GridLineColor { get; set; }
+
+        //float ZoomOutLimit { get; set; }
+        float MaxZoom { get; set; }
+        float MinZoom { get; set; }
+
+        Color32 HighlightColor { get; set; }
+        bool GridSnap { get; set; }
+        bool AutoSave { get; set; }
+
+        bool DragToCreate { get; set; }
+        bool ZoomToMouse { get; set; }
+
+        bool PortTooltips { get; set; }
+
+        NoodleStroke NoodleStroke { get; set; }
+        NoodlePath NoodlePath { get; set; }
+
+        bool GetPortColor( Type type, out Color color );
+        void SetPortColor( Type type, Color color );
+
+        bool GetSelectedPortColor( Type type, out Color color );
+        void SetSelectedPortColor( Type type, Color color );
+    }
+
+    public static class INodePreferencesExtensions
+    {
+        private static Dictionary<INodePreferenceSettings, Texture2D> s_GridTextures = new Dictionary<INodePreferenceSettings, Texture2D>();
+        private static Dictionary<INodePreferenceSettings, Texture2D> s_CrossTextures = new Dictionary<INodePreferenceSettings, Texture2D>();
+
+        public static Texture2D GetGridTexture( this INodePreferenceSettings settings )
+        {
+            Texture2D texture;
+            if ( !s_GridTextures.TryGetValue( settings, out texture ) )
+                s_GridTextures[settings] = texture = NodeEditorResources.GenerateGridTexture( settings.GridLineColor, settings.GridBGColor );
+            return texture;
+        }
+
+        public static void ClearGridTexture( this INodePreferenceSettings settings )
+        {
+            s_GridTextures.Remove( settings );
+        }
+
+        public static Texture2D GetCrossTexture( this INodePreferenceSettings settings )
+        {
+            Texture2D texture;
+            if ( !s_CrossTextures.TryGetValue( settings, out texture ) )
+                s_CrossTextures[settings] = texture = NodeEditorResources.GenerateCrossTexture( settings.GridLineColor );
+            return texture;
+        }
+
+        public static void ClearCrossTexture( this INodePreferenceSettings settings )
+        {
+            s_CrossTextures.Remove( settings );
+        }
+    }
+
     public static class NodeEditorPreferences {
 
 		/// <summary> The last editor we checked. This should be the one we modify </summary>
@@ -21,29 +81,49 @@ namespace XNodeEditor {
 		private static Dictionary<string, Settings> settings = new Dictionary<string, Settings>();
 
         [System.Serializable]
-        public class Settings : ISerializationCallbackReceiver {
+        public class Settings : INodePreferenceSettings, ISerializationCallbackReceiver
+        {
             [SerializeField] private Color32 _gridLineColor = new Color(0.45f, 0.45f, 0.45f);
-            public Color32 gridLineColor { get { return _gridLineColor; } set { _gridLineColor = value; _gridTexture = null; _crossTexture = null; } }
+            public Color32 GridLineColor { get { return _gridLineColor; } set { _gridLineColor = value; this.ClearGridTexture(); this.ClearCrossTexture(); } }
 
             [SerializeField] private Color32 _gridBgColor = new Color(0.18f, 0.18f, 0.18f);
-            public Color32 gridBgColor { get { return _gridBgColor; } set { _gridBgColor = value; _gridTexture = null; } }
+            public Color32 GridBGColor { get { return _gridBgColor; } set { _gridBgColor = value; this.ClearGridTexture(); } }
 
             [Obsolete("Use maxZoom instead")]
-            public float zoomOutLimit { get { return maxZoom; } set { maxZoom = value; } }
+            public float zoomOutLimit { get { return MaxZoom; } set { MaxZoom = value; } }
 
             [UnityEngine.Serialization.FormerlySerializedAs("zoomOutLimit")]
-            public float maxZoom = 5f;
-            public float minZoom = 1f;
-            public Color32 highlightColor = new Color32(255, 255, 255, 255);
-			public bool gridSnap = true;
-			public bool autoSave = true;
-			public bool dragToCreate = true;
-			public bool zoomToMouse = true;
-            public bool portTooltips = true;
+            [SerializeField] private float maxZoom = 5f;
+            public float MaxZoom { get { return maxZoom; } set { maxZoom = value; } }
+
+            [SerializeField] private float minZoom = 1f;
+            public float MinZoom { get { return minZoom; } set { minZoom = value; } }
+
+            [SerializeField] private Color32 highlightColor = new Color32(255, 255, 255, 255);
+            public Color32 HighlightColor { get { return highlightColor; } set { highlightColor = value; } }
+
+            [SerializeField] private bool gridSnap = true;
+            public bool GridSnap { get { return gridSnap; } set { gridSnap = value; } }
+
+            [SerializeField] private bool autoSave = true;
+            public bool AutoSave { get { return autoSave; } set { autoSave = value; } }
+
+            [SerializeField] private bool dragToCreate = true;
+            public bool DragToCreate { get { return dragToCreate; } set { dragToCreate = value; } }
+
+            [SerializeField] private bool zoomToMouse = true;
+            public bool ZoomToMouse { get { return zoomToMouse; } set { zoomToMouse = value; } }
+
+            [SerializeField] private bool portTooltips = true;
+            public bool PortTooltips { get { return portTooltips; } set { portTooltips = value; } }
+
             [SerializeField] private string typeColorsData = "";
             [SerializeField] private string typeSelectedColorsData = "";
+
             [NonSerialized] private Dictionary<string, Color> typeColors = null;
-            public Dictionary<string, Color> TypeColors
+            [NonSerialized] private Dictionary<string, Color> typeSelectedColors = null;
+
+            private Dictionary<string, Color> TypeColors
             {
                 get
                 {
@@ -67,9 +147,8 @@ namespace XNodeEditor {
                 {
                 }
             }
-
-            [NonSerialized] private Dictionary<string, Color> typeSelectedColors = null;
-            public Dictionary<string, Color> TypeSelectedColors
+            
+            private Dictionary<string, Color> TypeSelectedColors
             {
                 get
                 {
@@ -94,23 +173,32 @@ namespace XNodeEditor {
                 }
             }
 
-            [FormerlySerializedAs("noodleType")] public NoodlePath noodlePath = NoodlePath.Curvy;
-            public NoodleStroke noodleStroke = NoodleStroke.Full;
+            public bool GetPortColor( Type type, out Color color )
+            {
+                return TypeColors.TryGetValue( NodeEditorUtilities.PrettyName( type ), out color );
+            }
 
-            private Texture2D _gridTexture;
-            public Texture2D gridTexture {
-                get {
-                    if (_gridTexture == null) _gridTexture = NodeEditorResources.GenerateGridTexture(gridLineColor, gridBgColor);
-                    return _gridTexture;
-                }
+            public void SetPortColor( Type type, Color color )
+            {
+                TypeColors[NodeEditorUtilities.PrettyName( type )] = color;
             }
-            private Texture2D _crossTexture;
-            public Texture2D crossTexture {
-                get {
-                    if (_crossTexture == null) _crossTexture = NodeEditorResources.GenerateCrossTexture(gridLineColor);
-                    return _crossTexture;
-                }
+
+            public bool GetSelectedPortColor( Type type, out Color color )
+            {
+                return TypeSelectedColors.TryGetValue( NodeEditorUtilities.PrettyName( type ), out color );
             }
+
+            public void SetSelectedPortColor( Type type, Color color )
+            {
+                TypeSelectedColors[NodeEditorUtilities.PrettyName( type )] = color;
+            }
+
+            [FormerlySerializedAs("noodleType")]
+            [SerializeField] private NoodlePath noodlePath = NoodlePath.Curvy;
+            public NoodlePath NoodlePath { get { return noodlePath; } set { noodlePath = value; } }
+
+            [SerializeField] private NoodleStroke noodleStroke = NoodleStroke.Full;
+            public NoodleStroke NoodleStroke { get { return noodleStroke; } set { noodleStroke = value; } }
 
 			public void OnAfterDeserialize()
 			{
@@ -136,24 +224,24 @@ namespace XNodeEditor {
 			}
 		}
 
-        private static Func<string,Settings> GetSettingsOverride = GetSettingsInternal;
-        public static void SetSettingsOverride( Func<string, Settings> settingsOverride )
+        private static Func<string, INodePreferenceSettings> GetSettingsOverride = GetSettingsInternal;
+        public static void SetSettingsOverride( Func<string, INodePreferenceSettings> settingsOverride )
         {
             GetSettingsOverride = settingsOverride;
         }
 
         /// <summary> Get settings of current active editor </summary>
-        public static Settings GetSettings() {
+        public static INodePreferenceSettings GetSettings() {
             return GetSettingsInternal();
         }
 
-        private static Settings GetSettingsInternal( string key ) {
+        private static INodePreferenceSettings GetSettingsInternal( string key ) {
             if ( !settings.ContainsKey( lastKey ) ) VerifyLoaded();
             return settings[lastKey];
         }
 
         /// <summary> Get settings of current active editor </summary>
-        private static Settings GetSettingsInternal() {
+        private static INodePreferenceSettings GetSettingsInternal() {
             if (XNodeEditor.NodeEditorWindow.current == null) return new Settings();
 
             if (lastEditor != XNodeEditor.NodeEditorWindow.current.graphEditor) {
@@ -202,15 +290,15 @@ namespace XNodeEditor {
         private static void GridSettingsGUI(string key, Settings settings) {
             //Label
             EditorGUILayout.LabelField("Grid", EditorStyles.boldLabel);
-            settings.gridSnap = EditorGUILayout.Toggle(new GUIContent("Snap", "Hold CTRL in editor to invert"), settings.gridSnap);
-            settings.zoomToMouse = EditorGUILayout.Toggle(new GUIContent("Zoom to Mouse", "Zooms towards mouse position"), settings.zoomToMouse);
+            settings.GridSnap = EditorGUILayout.Toggle(new GUIContent("Snap", "Hold CTRL in editor to invert"), settings.GridSnap);
+            settings.ZoomToMouse = EditorGUILayout.Toggle(new GUIContent("Zoom to Mouse", "Zooms towards mouse position"), settings.ZoomToMouse);
             EditorGUILayout.LabelField("Zoom");
             EditorGUI.indentLevel++;
-            settings.maxZoom = EditorGUILayout.FloatField(new GUIContent("Max", "Upper limit to zoom"), settings.maxZoom);
-            settings.minZoom = EditorGUILayout.FloatField(new GUIContent("Min", "Lower limit to zoom"), settings.minZoom);
+            settings.MaxZoom = EditorGUILayout.FloatField(new GUIContent("Max", "Upper limit to zoom"), settings.MaxZoom);
+            settings.MinZoom = EditorGUILayout.FloatField(new GUIContent("Min", "Lower limit to zoom"), settings.MinZoom);
             EditorGUI.indentLevel--;
-            settings.gridLineColor = EditorGUILayout.ColorField("Color", settings.gridLineColor);
-            settings.gridBgColor = EditorGUILayout.ColorField(" ", settings.gridBgColor);
+            settings.GridLineColor = EditorGUILayout.ColorField("Color", settings.GridLineColor);
+            settings.GridBGColor = EditorGUILayout.ColorField(" ", settings.GridBGColor);
             if (GUI.changed) {
                 SavePrefs(key, settings);
 
@@ -222,7 +310,7 @@ namespace XNodeEditor {
         private static void SystemSettingsGUI(string key, Settings settings) {
             //Label
             EditorGUILayout.LabelField("System", EditorStyles.boldLabel);
-            settings.autoSave = EditorGUILayout.Toggle(new GUIContent("Autosave", "Disable for better editor performance"), settings.autoSave);
+            settings.AutoSave = EditorGUILayout.Toggle(new GUIContent("Autosave", "Disable for better editor performance"), settings.AutoSave);
             if (GUI.changed) SavePrefs(key, settings);
             EditorGUILayout.Space();
         }
@@ -230,11 +318,11 @@ namespace XNodeEditor {
         private static void NodeSettingsGUI(string key, Settings settings) {
             //Label
             EditorGUILayout.LabelField("Node", EditorStyles.boldLabel);
-            settings.highlightColor = EditorGUILayout.ColorField("Selection", settings.highlightColor);
-            settings.noodlePath = (NoodlePath) EditorGUILayout.EnumPopup("Noodle path", (Enum) settings.noodlePath);
-            settings.noodleStroke = (NoodleStroke) EditorGUILayout.EnumPopup("Noodle stroke", (Enum) settings.noodleStroke);
-            settings.portTooltips = EditorGUILayout.Toggle("Port Tooltips", settings.portTooltips);
-            settings.dragToCreate = EditorGUILayout.Toggle(new GUIContent("Drag to Create", "Drag a port connection anywhere on the grid to create and connect a node"), settings.dragToCreate);
+            settings.HighlightColor = EditorGUILayout.ColorField("Selection", settings.HighlightColor);
+            settings.NoodlePath = (NoodlePath) EditorGUILayout.EnumPopup("Noodle path", (Enum) settings.NoodlePath);
+            settings.NoodleStroke = (NoodleStroke) EditorGUILayout.EnumPopup("Noodle stroke", (Enum) settings.NoodleStroke);
+            settings.PortTooltips = EditorGUILayout.Toggle("Port Tooltips", settings.PortTooltips);
+            settings.DragToCreate = EditorGUILayout.Toggle(new GUIContent("Drag to Create", "Drag a port connection anywhere on the grid to create and connect a node"), settings.DragToCreate);
             if (GUI.changed) {
                 SavePrefs(key, settings);
                 NodeEditorWindow.RepaintAll();
@@ -267,12 +355,10 @@ namespace XNodeEditor {
 				if ( EditorGUI.EndChangeCheck() )
 				{
 					typeColors[type] = col;
-					if ( settings.TypeColors.ContainsKey( typeColorKey ) ) settings.TypeColors[typeColorKey] = col;
-					else settings.TypeColors.Add( typeColorKey, col );
-
+                    settings.SetPortColor( type, col );
+					
 					typeSelectedColors[type] = selectedCol;
-					if ( settings.TypeSelectedColors.ContainsKey( typeColorKey ) ) settings.TypeSelectedColors[typeColorKey] = selectedCol;
-					else settings.TypeSelectedColors.Add( typeColorKey, selectedCol );
+                    settings.SetSelectedPortColor( type, selectedCol );
 
 					SavePrefs( key, settings );
 					NodeEditorWindow.RepaintAll();
@@ -316,19 +402,20 @@ namespace XNodeEditor {
 			if ( type == null ) return Color.gray;
 			Color col;
 			Color selectedCol;
-			if ( !typeColors.TryGetValue( type, out col ) )
-			{
+			if ( !typeColors.TryGetValue( type, out col ) ) {
 				string typeName = type.PrettyName();
-                if ( settings[lastKey].TypeColors.ContainsKey( typeName ) )
-                {
-                    typeColors.Add( type, settings[lastKey].TypeColors[typeName] );
-                    typeSelectedColors.Add( type, settings[lastKey].TypeSelectedColors[typeName] );
+
+                if ( settings[lastKey].GetPortColor( type, out col ) ) {
+                    typeColors.Add( type, col );
+                    if ( settings[lastKey].GetSelectedPortColor( type, out selectedCol ) )
+                        typeSelectedColors.Add( type, selectedCol );
+                    else
+                        typeSelectedColors[type] = col;
                 }
                 else
                 {
                     DefaultNoodleColorAttribute defaultColorsAttribute = System.ComponentModel.TypeDescriptor.GetAttributes( type ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
-                    if ( defaultColorsAttribute == null )
-                    {
+                    if ( defaultColorsAttribute == null ) {
 #if UNITY_5_4_OR_NEWER
                         UnityEngine.Random.InitState( typeName.GetHashCode() );
 #else
@@ -340,8 +427,7 @@ namespace XNodeEditor {
                         typeSelectedColors[type] = selectedCol;
                         typeColors.Add( type, col );
                     }
-                    else
-                    {
+                    else {
                         selectedCol = defaultColorsAttribute.SelectedColor;
                         col = defaultColorsAttribute.Color;
                         typeSelectedColors[type] = selectedCol;
@@ -359,19 +445,19 @@ namespace XNodeEditor {
 			if ( type == null ) return Color.gray;
             Color col;
             Color selectedCol;
-            if ( !typeSelectedColors.TryGetValue( type, out selectedCol ) )
-			{
+            if ( !typeSelectedColors.TryGetValue( type, out selectedCol ) ) {
 				string typeName = type.PrettyName();
-                if ( settings[lastKey].TypeSelectedColors.ContainsKey( typeName ) )
-                {
-                    typeColors.Add( type, settings[lastKey].TypeColors[typeName] );
-                    typeSelectedColors.Add( type, settings[lastKey].TypeSelectedColors[typeName] );
+
+                if ( settings[lastKey].GetSelectedPortColor( type, out selectedCol ) ) {
+                    typeSelectedColors.Add( type, selectedCol );
+                    if ( settings[lastKey].GetPortColor( type, out col ) )
+                        typeColors[type] = col;
+                    else
+                        typeColors[type] = selectedCol;
                 }
-                else
-                {
+                else {
                     DefaultNoodleColorAttribute defaultColorsAttribute = System.ComponentModel.TypeDescriptor.GetAttributes( type ).OfType<DefaultNoodleColorAttribute>().FirstOrDefault();
-                    if ( defaultColorsAttribute == null )
-                    {
+                    if ( defaultColorsAttribute == null ) {
 #if UNITY_5_4_OR_NEWER
                         UnityEngine.Random.InitState( typeName.GetHashCode() );
 #else
@@ -383,8 +469,7 @@ namespace XNodeEditor {
                         typeSelectedColors[type] = selectedCol;
                         typeColors.Add( type, col );
                     }
-                    else
-                    {
+                    else {
                         selectedCol = defaultColorsAttribute.SelectedColor;
                         col = defaultColorsAttribute.Color;
                         typeSelectedColors[type] = selectedCol;
