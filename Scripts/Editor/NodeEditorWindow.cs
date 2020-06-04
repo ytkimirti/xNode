@@ -61,7 +61,7 @@ namespace XNodeEditor {
             {
                 if ( s_NodeFoldoutStyle == null )
                 {
-                    s_NodeFoldoutStyle = new GUIStyle( EditorStyles.foldout) ;
+                    s_NodeFoldoutStyle = new GUIStyle(EditorStyles.foldout) ;
                     s_NodeFoldoutStyle.normal.background = ArrowRightTexture;
                     s_NodeFoldoutStyle.active.background = ArrowRightTexture;
                     s_NodeFoldoutStyle.focused.background = ArrowRightTexture;
@@ -72,7 +72,10 @@ namespace XNodeEditor {
                     s_NodeFoldoutStyle.onFocused.background = ArrowDownTexture;
                     s_NodeFoldoutStyle.onHover.background = ArrowDownTexture;
 
-                    s_NodeFoldoutStyle.border = new RectOffset( s_NodeFoldoutStyle.border.left + 5, s_NodeFoldoutStyle.border.right, s_NodeFoldoutStyle.border.top, s_NodeFoldoutStyle.border.bottom );
+                    s_NodeFoldoutStyle.fixedWidth = 18;
+                    s_NodeFoldoutStyle.fixedHeight = 18;
+
+                    //s_NodeFoldoutStyle.border = new RectOffset( s_NodeFoldoutStyle.border.left + 5, s_NodeFoldoutStyle.border.right, s_NodeFoldoutStyle.border.top, s_NodeFoldoutStyle.border.bottom );
                 }
                 return s_NodeFoldoutStyle;
             }
