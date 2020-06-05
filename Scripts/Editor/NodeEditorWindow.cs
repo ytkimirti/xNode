@@ -338,7 +338,7 @@ namespace XNodeEditor {
         public static NodeEditorWindow Open(XNode.NodeGraph graph) {
             if (!graph) return null;
 
-            bool openNewWindow = ( Event.current.modifiers & EventModifiers.Alt ) == EventModifiers.Alt;
+            bool openNewWindow = Event.current != null && ( Event.current.modifiers & EventModifiers.Alt ) == EventModifiers.Alt;
             NodeEditorWindow w = openNewWindow ? CreateWindow<NodeEditorWindow>("xNode") : GetWindow<NodeEditorWindow>("xNode");
             w.wantsMouseMove = true;
 
