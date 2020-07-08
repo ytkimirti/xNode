@@ -72,10 +72,10 @@ namespace XNodeEditor {
                     s_NodeFoldoutStyle.onFocused.background = ArrowDownTexture;
                     s_NodeFoldoutStyle.onHover.background = ArrowDownTexture;
 
-                    s_NodeFoldoutStyle.fixedWidth = 18;
-                    s_NodeFoldoutStyle.fixedHeight = 18;
+                    s_NodeFoldoutStyle.fixedWidth = ArrowDownTexture.width;
+                    s_NodeFoldoutStyle.fixedHeight = ArrowDownTexture.height;
 
-                    //s_NodeFoldoutStyle.border = new RectOffset( s_NodeFoldoutStyle.border.left + 5, s_NodeFoldoutStyle.border.right, s_NodeFoldoutStyle.border.top, s_NodeFoldoutStyle.border.bottom );
+                    s_NodeFoldoutStyle.border = new RectOffset();
                 }
                 return s_NodeFoldoutStyle;
             }
