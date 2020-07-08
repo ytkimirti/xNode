@@ -505,15 +505,21 @@ namespace XNodeEditor {
                 //Get node position
                 Vector2 nodePos = GridToWindowPositionNoClipped(node.position);
 
-                EditorGUI.BeginChangeCheck();
-				var folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
-                if ( EditorGUI.EndChangeCheck() )
+                bool foldable;
+                node.GetType().TryGetAttributeFoldable( out foldable );
+
+                if ( foldable || node.folded )
                 {
-					Undo.RecordObject( node, $"Fold Node: {node.name}" );
-					node.folded = folded;
+                    EditorGUI.BeginChangeCheck();
+                    var folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
+                    if ( EditorGUI.EndChangeCheck() )
+                    {
+                        Undo.RecordObject( node, $"Fold Node: {node.name}" );
+                        node.folded = folded;
 #if ODIN_INSPECTOR
-					GUIHelper.RequestRepaint();
+                        GUIHelper.RequestRepaint();
 #endif
+                    }
                 }
 
                 GUILayout.BeginArea(new Rect(nodePos, new Vector2(nodeEditor.GetWidth(), 4000)));

@@ -11,6 +11,7 @@ namespace XNodeEditor {
     public static class NodeEditorReflection {
         [NonSerialized] private static Dictionary<Type, Color> nodeTint;
         [NonSerialized] private static Dictionary<Type, int> nodeWidth;
+        [NonSerialized] private static Dictionary<Type, bool> nodeNotFoldable;
         /// <summary> All available node types </summary>
         public static Type[] nodeTypes { get { return _nodeTypes != null ? _nodeTypes : _nodeTypes = GetNodeTypes(); } }
 
@@ -42,6 +43,16 @@ namespace XNodeEditor {
                 CacheAttributes<int, XNode.Node.NodeWidthAttribute>(ref nodeWidth, x => x.width);
             }
             return nodeWidth.TryGetValue(nodeType, out width);
+        }
+
+        /// <summary> Get custom node widths defined with [NodeWidth(width)] </summary>
+        public static bool TryGetAttributeFoldable(this Type nodeType, out bool foldable) {
+            if (nodeNotFoldable == null) {
+                CacheAttributes<bool, DontFoldAttribute>(ref nodeNotFoldable, x => false);
+            }
+
+            foldable = !nodeNotFoldable.ContainsKey( nodeType );
+            return true;
         }
 
         private static void CacheAttributes<V, A>(ref Dictionary<Type, V> dict, Func<A, V> getter) where A : Attribute {
