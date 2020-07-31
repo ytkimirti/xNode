@@ -436,6 +436,8 @@ namespace XNodeEditor {
             if (Event.current.type != EventType.Layout && currentActivity == NodeActivity.DragGrid) selectedReroutes = selection;
         }
 
+        private bool hasDrawnOnce = false;
+
         private void DrawNodes() {
             Event e = Event.current;
             if (e.type == EventType.Layout) {
@@ -480,7 +482,7 @@ namespace XNodeEditor {
                 XNode.Node node = graph.nodes[n];
 
                 // Culling
-                if (e.type == EventType.Layout) {
+                if (e.type == EventType.Layout && hasDrawnOnce) {
                     // Cull unselected nodes outside view
                     if (!Selection.Contains(node) && ShouldBeCulled(node)) {
                         culledNodes.Add(node);
@@ -493,6 +495,8 @@ namespace XNodeEditor {
                     foreach (var kvp in _portConnectionPoints)
                         if (kvp.Key.node == node) removeEntries.Add(kvp.Key);
                     foreach (var k in removeEntries) _portConnectionPoints.Remove(k);
+
+                    hasDrawnOnce = true;
                 }
 
                 NodeEditor nodeEditor = NodeEditor.GetEditor(node, this);
