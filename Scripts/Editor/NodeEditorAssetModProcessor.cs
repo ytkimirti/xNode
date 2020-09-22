@@ -47,6 +47,8 @@ namespace XNodeEditor {
         /// <summary> Automatically re-add loose node assets to the Graph node list </summary>
         [InitializeOnLoadMethod]
         private static void OnReloadEditor () {
+            EditorApplication.delayCall += () =>
+            {
             // Find all NodeGraph assets
             string[] guids = AssetDatabase.FindAssets ("t:" + typeof (XNode.NodeGraph));
             for (int i = 0; i < guids.Length; i++) {
@@ -61,6 +63,7 @@ namespace XNodeEditor {
                     if (!graph.nodes.Contains (objs[u] as XNode.Node)) graph.nodes.Add(objs[u] as XNode.Node);
                 }
             }
+            };
         }
     }
 }
