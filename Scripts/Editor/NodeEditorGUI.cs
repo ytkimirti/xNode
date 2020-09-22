@@ -436,6 +436,8 @@ namespace XNodeEditor {
             if (Event.current.type != EventType.Layout && currentActivity == NodeActivity.DragGrid) selectedReroutes = selection;
         }
 
+        private bool hasDrawnOnce = false;
+
         private void DrawNodes() {
             Event e = Event.current;
             if (e.type == EventType.Layout) {
@@ -480,7 +482,7 @@ namespace XNodeEditor {
                 XNode.Node node = graph.nodes[n];
 
                 // Culling
-                if (e.type == EventType.Layout) {
+                if (e.type == EventType.Layout && hasDrawnOnce) {
                     // Cull unselected nodes outside view
                     if (!Selection.Contains(node) && ShouldBeCulled(node)) {
                         culledNodes.Add(node);
@@ -493,6 +495,8 @@ namespace XNodeEditor {
                     foreach (var kvp in _portConnectionPoints)
                         if (kvp.Key.node == node) removeEntries.Add(kvp.Key);
                     foreach (var k in removeEntries) _portConnectionPoints.Remove(k);
+
+                    hasDrawnOnce = true;
                 }
 
                 NodeEditor nodeEditor = NodeEditor.GetEditor(node, this);
@@ -505,15 +509,21 @@ namespace XNodeEditor {
                 //Get node position
                 Vector2 nodePos = GridToWindowPositionNoClipped(node.position);
 
-                EditorGUI.BeginChangeCheck();
-				var folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
-                if ( EditorGUI.EndChangeCheck() )
+                bool foldable;
+                node.GetType().TryGetAttributeFoldable( out foldable );
+
+                if ( foldable || node.folded )
                 {
-					Undo.RecordObject( node, $"Fold Node: {node.name}" );
-					node.folded = folded;
+                    EditorGUI.BeginChangeCheck();
+                    var folded = !EditorGUI.Foldout(new Rect(nodePos + new Vector2(-12,10), new Vector2(18,18)), !node.folded, GUIContent.none, NodeFoldoutStyle);
+                    if ( EditorGUI.EndChangeCheck() )
+                    {
+                        Undo.RecordObject( node, $"Fold Node: {node.name}" );
+                        node.folded = folded;
 #if ODIN_INSPECTOR
-					GUIHelper.RequestRepaint();
+                        GUIHelper.RequestRepaint();
 #endif
+                    }
                 }
 
                 GUILayout.BeginArea(new Rect(nodePos, new Vector2(nodeEditor.GetWidth(), 4000)));

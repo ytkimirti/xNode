@@ -25,6 +25,13 @@ namespace XNodeEditor {
             GUILayout.Label(target.name, NodeEditorResources.styles.nodeHeader, GUILayout.Height(30));
         }
 
+#if ODIN_INSPECTOR
+        public virtual void DrawTree()
+        {
+            objectTree.Draw( true );
+        }
+#endif
+
         /// <summary> Draws standard field editors for all public fields </summary>
         public virtual void OnBodyGUI() {
             InNodeEditor = true;
@@ -33,7 +40,7 @@ namespace XNodeEditor {
             if (OdinInspectorHelper.EnableOdinNodeDrawer) {
                 InspectorUtilities.BeginDrawPropertyTree(objectTree, true);
                 GUIHelper.PushLabelWidth(84);
-                objectTree.Draw(true);
+                DrawTree();
                 InspectorUtilities.EndDrawPropertyTree(objectTree);
                 GUIHelper.PopLabelWidth();
 
