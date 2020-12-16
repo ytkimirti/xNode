@@ -38,12 +38,20 @@ namespace XNodeEditor {
 
 #if ODIN_INSPECTOR
             if (OdinInspectorHelper.EnableOdinNodeDrawer) {
+                try {
 #if ODIN_INSPECTOR_3
-                objectTree.BeginDraw(true);
+                    objectTree.BeginDraw( true );
 #else
-                InspectorUtilities.BeginDrawPropertyTree(objectTree, true);
+                    InspectorUtilities.BeginDrawPropertyTree(objectTree, true);
 #endif
-                GUIHelper.PushLabelWidth(84);
+                }
+                catch ( ArgumentNullException ) {
+                    objectTree.EndDraw();
+                    NodeEditor.RemoveEditor( this.target, this.window );
+                    return;
+                }
+
+                GUIHelper.PushLabelWidth( 84 );
                 DrawTree();
 #if ODIN_INSPECTOR_3
                 objectTree.EndDraw();
