@@ -24,6 +24,15 @@ namespace XNodeEditor.Internal {
 		private PropertyTree _objectTree;
 		public PropertyTree objectTree {
 			get {
+                if (typeof(UnityEngine.Object).IsAssignableFrom(typeof(K)))
+                {
+                    if (this._objectTree != null && ((UnityEngine.Object)this._objectTree.WeakTargets[0]) == null)
+                    {
+                        this._objectTree.Dispose();
+                        this._objectTree = null;
+                    }
+                }
+
 				if (this._objectTree == null) {
 					try {
 						bool wasInEditor = NodeEditor.InNodeEditor;
