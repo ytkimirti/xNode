@@ -38,10 +38,18 @@ namespace XNodeEditor {
 
 #if ODIN_INSPECTOR
             if (OdinInspectorHelper.EnableOdinNodeDrawer) {
+#if ODIN_INSPECTOR_3
+                objectTree.BeginDraw(true);
+#else
                 InspectorUtilities.BeginDrawPropertyTree(objectTree, true);
+#endif
                 GUIHelper.PushLabelWidth(84);
                 DrawTree();
+#if ODIN_INSPECTOR_3
+                objectTree.EndDraw();
+#else
                 InspectorUtilities.EndDrawPropertyTree(objectTree);
+#endif
                 GUIHelper.PopLabelWidth();
 
                 // Call repaint so that the graph window elements respond properly to layout changes coming from Odin
