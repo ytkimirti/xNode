@@ -106,7 +106,14 @@ namespace XNodeEditor {
             }
         }
 
+        private void UndoRedoPerformed()
+        {
+            Repaint();
+        }
+
         private void OnDisable() {
+            Undo.undoRedoPerformed -= UndoRedoPerformed;
+
             // Cache portConnectionPoints before serialization starts
             int count = portConnectionPoints.Count;
             _references = new NodePortReference[count];
@@ -124,6 +131,8 @@ namespace XNodeEditor {
         }
 
         private void OnEnable() {
+            Undo.undoRedoPerformed += UndoRedoPerformed;
+
             // Reload portConnectionPoints if there are any
             int length = _references.Length;
             if (length == _rects.Length) {
