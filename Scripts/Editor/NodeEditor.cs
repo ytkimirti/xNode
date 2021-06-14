@@ -13,8 +13,6 @@ namespace XNodeEditor {
     [CustomNodeEditor(typeof(XNode.Node))]
     public class NodeEditor : XNodeEditor.Internal.NodeEditorBase<NodeEditor, NodeEditor.CustomNodeEditorAttribute, XNode.Node> {
 
-        private readonly Color DEFAULTCOLOR = new Color32(90, 97, 105, 255);
-
         /// <summary> Fires every whenever a node was modified through the editor </summary>
         public static Action<XNode.Node> onUpdateNode;
         public readonly static Dictionary<XNode.NodePort, Vector2> portPositions = new Dictionary<XNode.NodePort, Vector2>();
@@ -103,7 +101,7 @@ namespace XNodeEditor {
             Color color;
             if (type.TryGetAttributeTint(out color)) return color;
             // Return default color (grey)
-            else return DEFAULTCOLOR;
+            else return NodeEditorPreferences.GetSettings().tintColor;
         }
 
         public virtual GUIStyle GetBodyStyle() {
@@ -112,6 +110,11 @@ namespace XNodeEditor {
 
         public virtual GUIStyle GetBodyHighlightStyle() {
             return NodeEditorResources.styles.nodeHighlight;
+        }
+
+        /// <summary> Override to display custom node header tooltips </summary>
+        public virtual string GetHeaderTooltip() {
+            return null;
         }
 
         /// <summary> Add items for the context menu when right-clicking this node. Override to add custom menu items. </summary>

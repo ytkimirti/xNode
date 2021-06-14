@@ -35,6 +35,7 @@ namespace XNodeEditor
         }
     }
 #else
+    [CanEditMultipleObjects]
     public class GlobalGraphEditor : Editor {
         public override void OnInspectorGUI() {
             serializedObject.Update();
@@ -85,6 +86,7 @@ namespace XNodeEditor
         }
     }
 #else
+    [CanEditMultipleObjects]
     public class GlobalNodeEditor : Editor {
         public override void OnInspectorGUI() {
             serializedObject.Update();

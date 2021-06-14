@@ -144,30 +144,22 @@ namespace XNodeEditor {
 
         /// <summary> Show right-click context menu for hovered port </summary>
         void ShowPortContextMenu(XNode.NodePort hoveredPort) {
-            if ( hoveredPort.ConnectionCount == 0 )
-                return;
-
             GenericMenu contextMenu = new GenericMenu();
+            foreach (var port in hoveredPort.GetConnections()) {
+                var name = port.node.name;
+                var index = hoveredPort.GetConnectionIndex(port);
+                contextMenu.AddItem(new GUIContent(string.Format("Disconnect({0})", name)), false, () => hoveredPort.Disconnect(index));
+            }
             contextMenu.AddItem(new GUIContent("Clear Connections"), false, () => hoveredPort.ClearConnections());
-            contextMenu.AddSeparator( string.Empty );
+            //Get compatible nodes with this port
+            if (NodeEditorPreferences.GetSettings().createFilter) {
+                contextMenu.AddSeparator("");
 
-            for ( int i = 0; i < hoveredPort.ConnectionCount; ++i ) {
-                XNode.NodePort connection = hoveredPort.GetConnection( i );
-                if ( connection == null ) {
-                    contextMenu.AddItem( new GUIContent( "Remove blank connections" ), false, () => hoveredPort.VerifyConnections() );
-                    break;
-                }
+                if (hoveredPort.direction == XNode.NodePort.IO.Input)
+                    graphEditor.AddContextMenuItems(contextMenu, hoveredPort.ValueType, XNode.NodePort.IO.Output);
+                else
+                    graphEditor.AddContextMenuItems(contextMenu, hoveredPort.ValueType, XNode.NodePort.IO.Input);
             }
-
-            for ( int i = 0; i < hoveredPort.ConnectionCount; ++i ) {
-                XNode.NodePort connection = hoveredPort.GetConnection( i );
-                if ( connection == null ) // Connection exists but isn't actually connected
-                    continue;
-
-                int connectionIndex = i;
-                contextMenu.AddItem( new GUIContent( $"Disconnect {connectionIndex} {connection.node.name}:{connection.fieldName}" ), false, () => hoveredPort.Disconnect( connectionIndex ) );
-            }
-
             contextMenu.DropDown(new Rect(Event.current.mousePosition, Vector2.zero));
             if (NodeEditorPreferences.GetSettings().autoSave) AssetDatabase.SaveAssets();
         }
@@ -384,6 +376,8 @@ namespace XNodeEditor {
                     if (!_portConnectionPoints.TryGetValue(output, out fromRect)) continue;
 
                     Color portColor = graphEditor.GetPortColor(output);
+                    GUIStyle portStyle = graphEditor.GetPortStyle(output);
+
                     for (int k = 0; k < output.ConnectionCount; k++) {
                         XNode.NodePort input = output.GetConnection(k);
 
@@ -420,11 +414,11 @@ namespace XNodeEditor {
                             // Draw selected reroute points with an outline
                             if (selectedReroutes.Contains(rerouteRef)) {
                                 GUI.color = NodeEditorPreferences.GetSettings().highlightColor;
-                                GUI.DrawTexture(rect, NodeEditorResources.dotOuter);
+                                GUI.DrawTexture(rect, portStyle.normal.background);
                             }
 
                             GUI.color = portColor;
-                            GUI.DrawTexture(rect, NodeEditorResources.dot);
+                            GUI.DrawTexture(rect, portStyle.active.background);
                             if (rect.Overlaps(selectionBox)) selection.Add(rerouteRef);
                             if (rect.Contains(mousePos)) hoveredReroute = rerouteRef;
 
@@ -631,16 +625,21 @@ namespace XNodeEditor {
         }
 
         private void DrawTooltip() {
-            if (hoveredPort != null && NodeEditorPreferences.GetSettings().portTooltips && graphEditor != null) {
-                string tooltip = graphEditor.GetPortTooltip(hoveredPort);
-                if (string.IsNullOrEmpty(tooltip)) return;
-                GUIContent content = new GUIContent(tooltip);
-                Vector2 size = NodeEditorResources.styles.tooltip.CalcSize(content);
-                size.x += 8;
-                Rect rect = new Rect(Event.current.mousePosition - (size), size);
-                EditorGUI.LabelField(rect, content, NodeEditorResources.styles.tooltip);
-                Repaint();
+            if (!NodeEditorPreferences.GetSettings().portTooltips || graphEditor == null)
+                return;
+            string tooltip = null;
+            if (hoveredPort != null) {
+                tooltip = graphEditor.GetPortTooltip(hoveredPort);
+            } else if (hoveredNode != null && IsHoveringNode && IsHoveringTitle(hoveredNode)) {
+                tooltip = NodeEditor.GetEditor(hoveredNode, this).GetHeaderTooltip();
             }
+            if (string.IsNullOrEmpty(tooltip)) return;
+            GUIContent content = new GUIContent(tooltip);
+            Vector2 size = NodeEditorResources.styles.tooltip.CalcSize(content);
+            size.x += 8;
+            Rect rect = new Rect(Event.current.mousePosition - (size), size);
+            EditorGUI.LabelField(rect, content, NodeEditorResources.styles.tooltip);
+            Repaint();
         }
     }
 }
