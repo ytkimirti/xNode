@@ -36,17 +36,13 @@ namespace XNodeEditor {
 
 #if ODIN_INSPECTOR
             if (OdinInspectorHelper.EnableOdinNodeDrawer) {
-#if ODIN_INSPECTOR_3
-                objectTree.BeginDraw( true );
-#else
+#if !ODIN_INSPECTOR_3
                 InspectorUtilities.BeginDrawPropertyTree(objectTree, true);
 #endif
 
                 GUIHelper.PushLabelWidth( 84 );
                 DrawTree();
-#if ODIN_INSPECTOR_3
-                objectTree.EndDraw();
-#else
+#if !ODIN_INSPECTOR_3
                 InspectorUtilities.EndDrawPropertyTree(objectTree);
 #endif
                 GUIHelper.PopLabelWidth();
