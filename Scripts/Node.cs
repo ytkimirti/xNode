@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Sirenix.OdinInspector
+using Sirenix.OdinInspector;
 
 namespace XNode {
     /// <summary>
